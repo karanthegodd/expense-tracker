@@ -550,7 +550,7 @@ const Expenses = () => {
             <p className="text-sm">
               {searchQuery || filterCategory ? 'No matching expenses found' : 'No expense records yet'}
             </p>
-            <p className="text-sm mt-2">
+            <p className="text-xs mt-2">
               {searchQuery || filterCategory ? 'Try adjusting your search or filters' : 'Click "Add Expense" to get started!'}
             </p>
           </div>
