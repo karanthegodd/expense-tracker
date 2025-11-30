@@ -15,6 +15,7 @@ const FinancialPlanning = () => {
   
   // Budgets state
   const [budgets, setBudgets] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [showBudgetForm, setShowBudgetForm] = useState(false);
   const [editingBudgetId, setEditingBudgetId] = useState(null);
   const [deleteBudgetModalOpen, setDeleteBudgetModalOpen] = useState(false);
@@ -65,11 +66,15 @@ const FinancialPlanning = () => {
         // Check authentication status
         const authStatus = await isAuthenticated();
         setAuthenticated(authStatus);
+        // Load expenses first (needed for budget calculations)
+        const expensesData = await getExpenses();
+        setExpenses(expensesData || []);
         await loadBudgets();
         await loadGoals();
       } catch (error) {
         console.error('Error loading financial planning data:', error);
         showToast('Error loading data. Please refresh the page.', 'error');
+        setExpenses([]);
       } finally {
         setLoading(false);
       }
@@ -77,10 +82,17 @@ const FinancialPlanning = () => {
     loadData();
     
     // Also refresh periodically to catch changes (but don't refresh if forms are open)
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       // Only refresh if no forms are open to avoid disrupting user input
       if (!showBudgetForm && !showGoalForm && !showContributionForm && !showWithdrawalForm) {
-        loadData();
+        try {
+          const expensesData = await getExpenses();
+          setExpenses(expensesData || []);
+          await loadBudgets();
+          await loadGoals();
+        } catch (error) {
+          console.error('Error refreshing data:', error);
+        }
       }
     }, 3000);
     
@@ -155,24 +167,35 @@ const FinancialPlanning = () => {
       return;
     }
     
-    if (editingBudgetId) {
-      const result = await updateBudget(editingBudgetId, budgetFormData);
-      if (result) {
-        showToast('Budget updated', 'success');
-        resetBudgetForm();
-        await loadBudgets();
+    try {
+      if (editingBudgetId) {
+        const result = await updateBudget(editingBudgetId, budgetFormData);
+        if (result) {
+          showToast('Budget updated', 'success');
+          resetBudgetForm();
+          // Refresh expenses to recalculate spent amounts
+          const expensesData = await getExpenses();
+          setExpenses(expensesData || []);
+          await loadBudgets();
+        } else {
+          showToast('Failed to update budget', 'error');
+        }
       } else {
-        showToast('Failed to update budget', 'error');
+        const result = await addBudget(budgetFormData);
+        if (result) {
+          showToast('Budget added', 'success');
+          resetBudgetForm();
+          // Refresh expenses to recalculate spent amounts
+          const expensesData = await getExpenses();
+          setExpenses(expensesData || []);
+          await loadBudgets();
+        } else {
+          showToast('Failed to add budget', 'error');
+        }
       }
-    } else {
-      const result = await addBudget(budgetFormData);
-      if (result) {
-        showToast('Budget added', 'success');
-        resetBudgetForm();
-        await loadBudgets();
-      } else {
-        showToast('Failed to add budget', 'error');
-      }
+    } catch (error) {
+      console.error('Error in handleBudgetSubmit:', error);
+      showToast('An error occurred. Please try again.', 'error');
     }
   };
 
@@ -192,11 +215,19 @@ const FinancialPlanning = () => {
 
   const handleBudgetDeleteConfirm = async () => {
     if (budgetToDelete) {
-      await deleteBudget(budgetToDelete.id);
-      showToast('Budget deleted', 'success');
-      await loadBudgets();
-      setDeleteBudgetModalOpen(false);
-      setBudgetToDelete(null);
+      try {
+        await deleteBudget(budgetToDelete.id);
+        showToast('Budget deleted', 'success');
+        // Refresh expenses to recalculate spent amounts
+        const expensesData = await getExpenses();
+        setExpenses(expensesData || []);
+        await loadBudgets();
+        setDeleteBudgetModalOpen(false);
+        setBudgetToDelete(null);
+      } catch (error) {
+        console.error('Error deleting budget:', error);
+        showToast('Failed to delete budget', 'error');
+      }
     }
   };
 
@@ -406,11 +437,13 @@ const FinancialPlanning = () => {
   };
 
   const getSpentAmount = (category) => {
-    const expenses = getExpenses();
+    if (!expenses || expenses.length === 0) return 0;
+    
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     
     const monthlyExpenses = expenses.filter(exp => {
+      if (!exp || !exp.date) return false;
       const expDate = new Date(exp.date);
       return (
         expDate.getMonth() === currentMonth &&
