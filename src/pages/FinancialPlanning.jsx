@@ -23,6 +23,7 @@ const FinancialPlanning = () => {
     amount: '',
   });
   const [budgetFormErrors, setBudgetFormErrors] = useState({});
+  const [loading, setLoading] = useState(true);
 
   // Savings Goals state
   const [goals, setGoals] = useState([]);
@@ -57,8 +58,16 @@ const FinancialPlanning = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      await loadBudgets();
-      await loadGoals();
+      try {
+        setLoading(true);
+        await loadBudgets();
+        await loadGoals();
+      } catch (error) {
+        console.error('Error loading financial planning data:', error);
+        showToast('Error loading data. Please refresh the page.', 'error');
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
     
@@ -76,8 +85,13 @@ const FinancialPlanning = () => {
   }, [showBudgetForm, showGoalForm, showContributionForm, showWithdrawalForm]);
 
   const loadBudgets = async () => {
-    const data = await getBudgets();
-    setBudgets(data);
+    try {
+      const data = await getBudgets();
+      setBudgets(data || []);
+    } catch (error) {
+      console.error('Error loading budgets:', error);
+      setBudgets([]);
+    }
   };
 
   const loadGoals = async () => {
@@ -418,6 +432,17 @@ const FinancialPlanning = () => {
     };
   });
 
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="text-center py-12 text-white/60">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 fade-in">
@@ -425,7 +450,7 @@ const FinancialPlanning = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
             💰 Financial Planning
           </h1>
-          <p className="text-white/80 text-lg">Manage budgets and savings goals</p>
+          <p className="text-white/80 text-sm">Manage budgets and savings goals</p>
         </div>
         <div className="flex gap-3">
           <Button

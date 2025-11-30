@@ -12,6 +12,7 @@ const RecurringPayments = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState(null);
   const [formErrors, setFormErrors] = useState({});
+  const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -36,60 +37,86 @@ const RecurringPayments = () => {
 
   useEffect(() => {
     const initialize = async () => {
-      await loadPayments();
-      // Check for due payments on load
-      await checkAndAddDuePayments();
-      await loadPayments(); // Reload after checking
+      try {
+        setLoading(true);
+        await loadPayments();
+        // Check for due payments on load
+        await checkAndAddDuePayments();
+        await loadPayments(); // Reload after checking
+      } catch (error) {
+        console.error('Error initializing recurring payments:', error);
+        showToast('Error loading recurring payments. Please refresh the page.', 'error');
+      } finally {
+        setLoading(false);
+      }
     };
     initialize();
   }, []);
 
   const loadPayments = async () => {
-    const data = await getRecurringPayments();
-    setPayments(data.sort((a, b) => new Date(a.nextDueDate) - new Date(b.nextDueDate)));
+    try {
+      const data = await getRecurringPayments();
+      setPayments((data || []).sort((a, b) => new Date(a.nextDueDate) - new Date(b.nextDueDate)));
+    } catch (error) {
+      console.error('Error loading payments:', error);
+      setPayments([]);
+    }
   };
 
   const checkAndAddDuePayments = async () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const allPayments = await getRecurringPayments();
-    
-    for (const payment of allPayments) {
-      if (payment.autoAdd) {
-        const dueDate = new Date(payment.nextDueDate);
-        dueDate.setHours(0, 0, 0, 0);
-        
-        // If payment is due today or past due, add it as an expense
-        if (dueDate <= today) {
-          // Check if already added this period
-          const lastAdded = payment.lastAdded || '';
-          const todayStr = today.toISOString().split('T')[0];
-          
-          if (lastAdded !== todayStr) {
-            await addExpense({
-              name: payment.name,
-              amount: payment.amount,
-              category: payment.category,
-              date: todayStr,
-            });
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const allPayments = await getRecurringPayments();
+      
+      if (!allPayments || !Array.isArray(allPayments)) return;
+      
+      for (const payment of allPayments) {
+        if (payment && payment.autoAdd && payment.nextDueDate) {
+          try {
+            const dueDate = new Date(payment.nextDueDate);
+            if (isNaN(dueDate.getTime())) continue; // Skip invalid dates
+            dueDate.setHours(0, 0, 0, 0);
             
-            // Update next due date based on frequency
-            const nextDate = new Date(dueDate);
-            if (payment.frequency === 'weekly') {
-              nextDate.setDate(nextDate.getDate() + 7);
-            } else if (payment.frequency === 'monthly') {
-              nextDate.setMonth(nextDate.getMonth() + 1);
-            } else if (payment.frequency === 'yearly') {
-              nextDate.setFullYear(nextDate.getFullYear() + 1);
+            // If payment is due today or past due, add it as an expense
+            if (dueDate <= today) {
+              // Check if already added this period
+              const lastAdded = payment.lastAdded || '';
+              const todayStr = today.toISOString().split('T')[0];
+              
+              if (lastAdded !== todayStr) {
+                await addExpense({
+                  name: payment.name,
+                  amount: payment.amount,
+                  category: payment.category,
+                  date: todayStr,
+                });
+                
+                // Update next due date based on frequency
+                const nextDate = new Date(dueDate);
+                if (payment.frequency === 'weekly') {
+                  nextDate.setDate(nextDate.getDate() + 7);
+                } else if (payment.frequency === 'monthly') {
+                  nextDate.setMonth(nextDate.getMonth() + 1);
+                } else if (payment.frequency === 'yearly') {
+                  nextDate.setFullYear(nextDate.getFullYear() + 1);
+                }
+                
+                await updateRecurringPayment(payment.id, {
+                  nextDueDate: nextDate.toISOString().split('T')[0],
+                  lastAdded: todayStr,
+                });
+              }
             }
-            
-            await updateRecurringPayment(payment.id, {
-              nextDueDate: nextDate.toISOString().split('T')[0],
-              lastAdded: todayStr,
-            });
+          } catch (error) {
+            console.error('Error processing payment:', payment, error);
+            // Continue with next payment
           }
         }
       }
+    } catch (error) {
+      console.error('Error checking due payments:', error);
+      // Don't show error to user, just log it
     }
   };
 
@@ -216,6 +243,17 @@ const RecurringPayments = () => {
     return diffDays;
   };
 
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="text-center py-12 text-white/60">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 fade-in">
@@ -223,7 +261,7 @@ const RecurringPayments = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
             🔄 Recurring Payments
           </h1>
-          <p className="text-white/80 text-lg">Manage your subscriptions and recurring expenses</p>
+          <p className="text-white/80 text-sm">Manage your subscriptions and recurring expenses</p>
         </div>
         <Button
           variant="primary"
