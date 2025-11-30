@@ -1,0 +1,592 @@
+import { useState, useEffect } from 'react';
+import { getTotals } from '../utils/localStorage';
+import Card from '../components/Card';
+import ChartContainer from '../components/ChartContainer';
+import Button from '../components/Button';
+import { 
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar 
+} from 'recharts';
+
+const Dashboard = () => {
+  const [data, setData] = useState({
+    totalIncome: 0,
+    totalExpenses: 0,
+    totalSaved: 0,
+    categoryBreakdown: {},
+    recentTransactions: [],
+    budgets: [],
+    savingsGoals: [],
+    upcomingExpenses: [],
+    avgBudgetProgress: 0,
+    totalUpcoming: 0,
+  });
+
+  const loadData = async () => {
+    try {
+      const totals = await getTotals();
+      setData(totals);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      // Set default empty data on error
+      setData({
+        totalIncome: 0,
+        totalExpenses: 0,
+        totalSaved: 0,
+        categoryBreakdown: {},
+        recentTransactions: [],
+        budgets: [],
+        savingsGoals: [],
+        upcomingExpenses: [],
+        avgBudgetProgress: 0,
+        totalUpcoming: 0,
+      });
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    // Refresh every 30 seconds
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-CA', {
+      style: 'currency',
+      currency: 'CAD',
+    }).format(amount);
+  };
+
+  // Prepare daily data for line chart (current month)
+  const getDailyData = () => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    const dailyData = [];
+    const monthlyIncomes = data.monthlyIncomes || [];
+    const monthlyExpenses = data.monthlyExpenses || [];
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(currentYear, currentMonth, day);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const dayIncome = monthlyIncomes
+        .filter(inc => inc.date === dateStr)
+        .reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+      
+      const dayExpense = monthlyExpenses
+        .filter(exp => exp.date === dateStr)
+        .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+      
+      dailyData.push({
+        day: day,
+        date: dateStr,
+        income: dayIncome,
+        expenses: dayExpense,
+      });
+    }
+    
+    return dailyData;
+  };
+
+  const dailyData = getDailyData();
+
+  // Category data for pie chart
+  const categoryData = Object.entries(data.categoryBreakdown).map(([category, amount]) => ({
+    category,
+    amount: parseFloat(amount.toFixed(2)),
+  }));
+
+  const pieColors = ['#FF6A00', '#00AEEF', '#002145', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#9C27B0'];
+
+  // Budget progress data
+  const getBudgetProgressData = () => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const budgets = data.budgets || [];
+    const monthlyExpenses = data.monthlyExpenses || [];
+    
+    return budgets.map(budget => {
+      const spent = monthlyExpenses
+        .filter(exp => exp.category === budget.category)
+        .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+      
+      const percentage = (spent / parseFloat(budget.amount || 1)) * 100;
+      
+      let color = '#4CAF50'; // Green
+      if (percentage > 90) color = '#FF3B30'; // Red
+      else if (percentage > 50) color = '#FFB300'; // Orange
+      
+      return {
+        category: budget.category,
+        budget: parseFloat(budget.amount),
+        spent: spent,
+        remaining: parseFloat(budget.amount) - spent,
+        percentage: Math.min(percentage, 100),
+        color,
+      };
+    });
+  };
+
+  const budgetProgressData = getBudgetProgressData();
+
+  // Savings goals data for radial chart
+  const savingsGoalsData = (data.savingsGoals || []).map(goal => {
+    const percentage = (parseFloat(goal.savedAmount || 0) / parseFloat(goal.targetAmount || 1)) * 100;
+    return {
+      ...goal,
+      percentage: Math.min(percentage, 100),
+      fill: '#00AEEF',
+    };
+  });
+
+  // Upcoming expenses forecast data
+  const getUpcomingForecastData = () => {
+    const months = [];
+    const now = new Date();
+    const upcomingExpenses = data.upcomingExpenses || [];
+    
+    for (let i = 0; i < 6; i++) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const monthName = monthDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      
+      const monthExpenses = upcomingExpenses.filter(exp => {
+        const expDate = new Date(exp.dueDate);
+        return expDate.getMonth() === monthDate.getMonth() && 
+               expDate.getFullYear() === monthDate.getFullYear();
+      });
+      
+      const required = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+      
+      // Calculate saved amount (simplified - using current month savings)
+      const saved = i === 0 ? Math.max(0, data.totalSaved) : 0;
+      
+      months.push({
+        month: monthName,
+        required,
+        saved,
+        deficit: Math.max(0, required - saved),
+      });
+    }
+    
+    return months;
+  };
+
+  const forecastData = getUpcomingForecastData();
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 fade-in">
+        <div>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-2">
+            Dashboard
+          </h1>
+          <p className="text-white/80 text-lg">Overview of your financial health</p>
+        </div>
+        <Button variant="secondary" onClick={loadData} className="shadow-xl">
+          🔄 Refresh Data
+        </Button>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.1s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Total Income</h3>
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <span className="text-2xl">💰</span>
+            </div>
+          </div>
+          <p className="text-3xl font-bold">{formatCurrency(data.totalIncome)}</p>
+        </div>
+
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.2s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Total Expenses</h3>
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <span className="text-2xl">💸</span>
+            </div>
+          </div>
+          <p className="text-3xl font-bold">{formatCurrency(data.totalExpenses)}</p>
+        </div>
+
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.3s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Total Saved</h3>
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <span className="text-2xl">{data.totalSaved >= 0 ? '✅' : '⚠️'}</span>
+            </div>
+          </div>
+          <p className={`text-3xl font-bold ${data.totalSaved >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+            {formatCurrency(data.totalSaved)}
+          </p>
+        </div>
+
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Budget Progress</h3>
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <span className="text-2xl">📊</span>
+            </div>
+          </div>
+          <p className="text-3xl font-bold">{data.avgBudgetProgress.toFixed(0)}%</p>
+        </div>
+
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.5s' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Upcoming</h3>
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <span className="text-2xl">📅</span>
+            </div>
+          </div>
+          <p className="text-3xl font-bold">{formatCurrency(data.totalUpcoming)}</p>
+        </div>
+      </div>
+
+      {/* Charts Row 1: Line Chart and Pie Chart */}
+      <div className="grid md:grid-cols-2 gap-6 mb-10">
+        <ChartContainer title="Monthly Income vs Expenses" icon="📈">
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={dailyData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis 
+                dataKey="day" 
+                stroke="rgba(255,255,255,0.7)"
+                tick={{ fill: 'rgba(255,255,255,0.7)' }}
+              />
+              <YAxis 
+                stroke="rgba(255,255,255,0.7)"
+                tick={{ fill: 'rgba(255,255,255,0.7)' }}
+              />
+              <Tooltip 
+                formatter={(value) => formatCurrency(value)}
+                contentStyle={{ 
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  color: 'white'
+                }}
+              />
+              <Legend 
+                wrapperStyle={{ color: 'white' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="income" 
+                stroke="#00AEEF" 
+                strokeWidth={3}
+                dot={{ fill: '#00AEEF', r: 4 }}
+                name="Income"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="expenses" 
+                stroke="#FF6A00" 
+                strokeWidth={3}
+                dot={{ fill: '#FF6A00', r: 4 }}
+                name="Expenses"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+
+        <ChartContainer title="Expense by Category" icon="🥧">
+          {categoryData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie
+                  data={categoryData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={false}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="amount"
+                  animationBegin={0}
+                  animationDuration={800}
+                >
+                  {categoryData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={pieColors[index % pieColors.length]}
+                      style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value, name, props) => {
+                    const total = categoryData.reduce((sum, item) => sum + item.amount, 0);
+                    const percent = ((props.payload.amount / total) * 100).toFixed(1);
+                    return [
+                      `${props.payload.category}: ${percent}%`,
+                      formatCurrency(value)
+                    ];
+                  }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: '2px solid rgba(0, 33, 69, 0.3)',
+                    borderRadius: '12px',
+                    color: '#002145',
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                  }}
+                  itemStyle={{ 
+                    color: '#002145',
+                    padding: '4px 0'
+                  }}
+                  labelStyle={{ 
+                    color: '#002145',
+                    fontWeight: '700',
+                    marginBottom: '8px',
+                    fontSize: '15px'
+                  }}
+                />
+                <Legend 
+                  formatter={(value, entry) => {
+                    const total = categoryData.reduce((sum, item) => sum + item.amount, 0);
+                    const percent = ((entry.payload.amount / total) * 100).toFixed(0);
+                    return `${entry.payload.category}: ${percent}%`;
+                  }}
+                  wrapperStyle={{ color: 'white', paddingTop: '20px' }}
+                  iconType="circle"
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64 text-white/60">
+              <span className="text-6xl mb-4">📊</span>
+              <p className="text-lg">No expense data available</p>
+              <p className="text-sm mt-2">Start adding expenses to see your breakdown</p>
+            </div>
+          )}
+        </ChartContainer>
+      </div>
+
+      {/* Budget Progress Section */}
+      {budgetProgressData.length > 0 && (
+        <Card className="mb-10">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+            <span className="mr-2">📋</span> Budget Progress
+          </h2>
+          <div className="space-y-4">
+            {budgetProgressData.map((item, index) => (
+              <div key={item.category} className="glass-card p-4 slide-up" style={{ animationDelay: `${0.1 * index}s` }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-white">{item.category}</span>
+                  <div className="flex items-center space-x-4 text-sm text-white/80">
+                    <span>Budget: {formatCurrency(item.budget)}</span>
+                    <span>Spent: {formatCurrency(item.spent)}</span>
+                    <span className={`font-bold ${item.remaining >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                      Remaining: {formatCurrency(item.remaining)}
+                    </span>
+                  </div>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="h-4 rounded-full transition-all duration-500"
+                    style={{ 
+                      width: `${item.percentage}%`,
+                      backgroundColor: item.color,
+                      boxShadow: `0 0 10px ${item.color}50`
+                    }}
+                  ></div>
+                </div>
+                <p className="text-xs text-white/60 mt-1">{item.percentage.toFixed(1)}% used</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Savings Goals and Upcoming Expenses Row */}
+      <div className="grid md:grid-cols-2 gap-6 mb-10">
+        <Card>
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+            <span className="mr-2">🎯</span> Savings Goals
+          </h2>
+          {savingsGoalsData.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4">
+              {savingsGoalsData.map((goal, index) => (
+                <div key={goal.id} className="glass-card p-4 text-center slide-up" style={{ animationDelay: `${0.1 * index}s` }}>
+                  <h3 className="font-semibold text-white mb-2 text-sm">{goal.name}</h3>
+                  <ResponsiveContainer width="100%" height={120}>
+                    <RadialBarChart 
+                      cx="50%" 
+                      cy="50%" 
+                      innerRadius="60%" 
+                      outerRadius="90%" 
+                      data={[{ ...goal, value: goal.percentage }]}
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      <RadialBar 
+                        dataKey="value" 
+                        fill={goal.fill}
+                        cornerRadius={10}
+                        animationDuration={1000}
+                      />
+                      <text 
+                        x="50%" 
+                        y="50%" 
+                        textAnchor="middle" 
+                        dominantBaseline="middle" 
+                        fill="white"
+                        fontSize="14"
+                        fontWeight="bold"
+                      >
+                        {goal.percentage.toFixed(0)}%
+                      </text>
+                    </RadialBarChart>
+                  </ResponsiveContainer>
+                  <p className="text-xs text-white/80 mt-2">
+                    {formatCurrency(goal.savedAmount)} / {formatCurrency(goal.targetAmount)}
+                  </p>
+                  {goal.dueDate && (
+                    <p className="text-xs text-white/60 mt-1">
+                      Due: {new Date(goal.dueDate).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-white/60">
+              <span className="text-6xl mb-4 block">🎯</span>
+              <p>No savings goals yet</p>
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+            <span className="mr-2">📅</span> Upcoming Expenses Forecast
+          </h2>
+          {forecastData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={forecastData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis 
+                  dataKey="month" 
+                  stroke="rgba(255,255,255,0.7)"
+                  tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
+                />
+                <YAxis 
+                  stroke="rgba(255,255,255,0.7)"
+                  tick={{ fill: 'rgba(255,255,255,0.7)' }}
+                />
+                <Tooltip 
+                  formatter={(value) => formatCurrency(value)}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                    color: 'white'
+                  }}
+                />
+                <Legend wrapperStyle={{ color: 'white' }} />
+                <Bar dataKey="required" fill="#FF3B30" name="Required" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="saved" fill="#4CAF50" name="Saved" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="deficit" fill="#FFB300" name="Deficit" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-12 text-white/60">
+              <span className="text-6xl mb-4 block">📅</span>
+              <p>No upcoming expenses</p>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Recent Transactions */}
+      <Card>
+        <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+          <span className="mr-2">💳</span> Recent Transactions
+        </h2>
+        {data.recentTransactions.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b-2 border-white/20">
+                  <th className="text-left py-4 px-4 font-semibold text-white/80">Date</th>
+                  <th className="text-left py-4 px-4 font-semibold text-white/80">Type</th>
+                  <th className="text-left py-4 px-4 font-semibold text-white/80">Description</th>
+                  <th className="text-left py-4 px-4 font-semibold text-white/80">Category</th>
+                  <th className="text-right py-4 px-4 font-semibold text-white/80">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recentTransactions.map((transaction, index) => (
+                  <tr 
+                    key={transaction.id} 
+                    className="border-b border-white/10 hover:bg-white/5 transition-all duration-200 slide-up"
+                    style={{ animationDelay: `${0.05 * index}s` }}
+                  >
+                    <td className="py-4 px-4 text-white/80">
+                      {new Date(transaction.date).toLocaleDateString()}
+                    </td>
+                    <td className="py-4 px-4">
+                      <span
+                        className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                          transaction.type === 'income'
+                            ? 'bg-green-500/30 text-green-200 border border-green-400/50'
+                            : 'bg-red-500/30 text-red-200 border border-red-400/50'
+                        }`}
+                      >
+                        {transaction.type === 'income' ? '💰 Income' : '💸 Expense'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 font-medium text-white">
+                      {transaction.type === 'income' ? transaction.source : transaction.name}
+                    </td>
+                    <td className="py-4 px-4">
+                      {transaction.category ? (
+                        <span className="px-2 py-1 bg-light-blue/30 text-light-blue-200 rounded-lg text-sm font-medium border border-light-blue/50">
+                          {transaction.category}
+                        </span>
+                      ) : (
+                        <span className="text-white/40">N/A</span>
+                      )}
+                    </td>
+                    <td className={`py-4 px-4 text-right font-bold text-lg ${
+                      transaction.type === 'income' 
+                        ? 'text-green-300' 
+                        : parseFloat(transaction.amount) < 0 
+                        ? 'text-green-300' 
+                        : 'text-red-300'
+                    }`}>
+                      {transaction.type === 'income' ? (
+                        <span>+{formatCurrency(parseFloat(transaction.amount))}</span>
+                      ) : parseFloat(transaction.amount) < 0 ? (
+                        <span className="flex items-center justify-end gap-1">
+                          <span>↩️</span>
+                          <span>+{formatCurrency(Math.abs(parseFloat(transaction.amount)))}</span>
+                          <span className="text-xs">(Refund)</span>
+                        </span>
+                      ) : (
+                        <span>-{formatCurrency(parseFloat(transaction.amount))}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-12 text-white/60">
+            <span className="text-6xl mb-4 block">💳</span>
+            <p className="text-lg">No transactions yet</p>
+            <p className="text-sm mt-2">Start by adding income or expenses!</p>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+export default Dashboard;
