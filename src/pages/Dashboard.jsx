@@ -58,7 +58,7 @@ const Dashboard = () => {
     }).format(amount);
   };
 
-  // Prepare daily data for line chart (current month)
+  // Prepare daily data for line chart (current month) - with cumulative totals
   const getDailyData = () => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
@@ -67,6 +67,9 @@ const Dashboard = () => {
     const dailyData = [];
     const monthlyIncomes = data.monthlyIncomes || [];
     const monthlyExpenses = data.monthlyExpenses || [];
+    
+    let cumulativeIncome = 0;
+    let cumulativeExpenses = 0;
     
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentYear, currentMonth, day);
@@ -80,11 +83,15 @@ const Dashboard = () => {
         .filter(exp => exp.date === dateStr)
         .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
       
+      // Add to cumulative totals
+      cumulativeIncome += dayIncome;
+      cumulativeExpenses += dayExpense;
+      
       dailyData.push({
         day: day,
         date: dateStr,
-        income: dayIncome,
-        expenses: dayExpense,
+        income: cumulativeIncome,
+        expenses: cumulativeExpenses,
       });
     }
     
