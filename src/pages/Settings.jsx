@@ -39,12 +39,12 @@ const Settings = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-10 fade-in">
-        <h1 className="text-5xl md:text-6xl font-bold text-white mb-2">
+    <div className="container mx-auto px-4 py-6">
+      <div className="mb-6 fade-in">
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
           ⚙️ Settings
         </h1>
-        <p className="text-white/80 text-lg">Manage your account preferences</p>
+        <p className="text-white/80 text-sm">Manage your account preferences</p>
       </div>
 
       {loading ? (

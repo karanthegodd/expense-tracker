@@ -183,13 +183,13 @@ const Income = () => {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 fade-in">
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 fade-in">
         <div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
             💰 Income Management
           </h1>
-          <p className="text-white/80 text-lg">Track and manage your income sources</p>
+          <p className="text-white/80 text-sm">Track and manage your income sources</p>
         </div>
         <Button
           variant="primary"
@@ -565,9 +565,9 @@ const Income = () => {
             </div>
           </>
         ) : (
-          <div className="text-center py-12 text-white/60">
-            <span className="text-6xl mb-4 block">💰</span>
-            <p className="text-lg">
+          <div className="text-center py-8 text-white/60">
+            <span className="text-4xl mb-3 block">💰</span>
+            <p className="text-sm">
               {searchQuery ? 'No matching income found' : 'No income records yet'}
             </p>
             <p className="text-sm mt-2">

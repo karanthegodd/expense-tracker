@@ -184,76 +184,76 @@ const Dashboard = () => {
   const forecastData = getUpcomingForecastData();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 fade-in">
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 fade-in">
         <div>
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
             Dashboard
           </h1>
-          <p className="text-white/80 text-lg">Overview of your financial health</p>
+          <p className="text-white/80 text-sm">Overview of your financial health</p>
         </div>
-        <Button variant="secondary" onClick={loadData} className="shadow-xl">
+        <Button variant="secondary" onClick={loadData} className="shadow-xl text-sm">
           🔄 Refresh Data
         </Button>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <div className="kpi-card slide-up" style={{ animationDelay: '0.1s' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Total Income</h3>
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <span className="text-2xl">💰</span>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Total Income</h3>
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <span className="text-lg">💰</span>
             </div>
           </div>
-          <p className="text-3xl font-bold">{formatCurrency(data.totalIncome)}</p>
+          <p className="text-2xl font-bold">{formatCurrency(data.totalIncome)}</p>
         </div>
 
         <div className="kpi-card slide-up" style={{ animationDelay: '0.2s' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Total Expenses</h3>
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <span className="text-2xl">💸</span>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Total Expenses</h3>
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <span className="text-lg">💸</span>
             </div>
           </div>
-          <p className="text-3xl font-bold">{formatCurrency(data.totalExpenses)}</p>
+          <p className="text-2xl font-bold">{formatCurrency(data.totalExpenses)}</p>
         </div>
 
         <div className="kpi-card slide-up" style={{ animationDelay: '0.3s' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Total Saved</h3>
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <span className="text-2xl">{data.totalSaved >= 0 ? '✅' : '⚠️'}</span>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Total Saved</h3>
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <span className="text-lg">{data.totalSaved >= 0 ? '✅' : '⚠️'}</span>
             </div>
           </div>
-          <p className={`text-3xl font-bold ${data.totalSaved >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+          <p className={`text-2xl font-bold ${data.totalSaved >= 0 ? 'text-green-300' : 'text-red-300'}`}>
             {formatCurrency(data.totalSaved)}
           </p>
         </div>
 
         <div className="kpi-card slide-up" style={{ animationDelay: '0.4s' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Budget Progress</h3>
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <span className="text-2xl">📊</span>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Budget Progress</h3>
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <span className="text-lg">📊</span>
             </div>
           </div>
-          <p className="text-3xl font-bold">{data.avgBudgetProgress.toFixed(0)}%</p>
+          <p className="text-2xl font-bold">{data.avgBudgetProgress.toFixed(0)}%</p>
         </div>
 
         <div className="kpi-card slide-up" style={{ animationDelay: '0.5s' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold opacity-90 uppercase tracking-wide">Upcoming</h3>
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <span className="text-2xl">📅</span>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Upcoming</h3>
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <span className="text-lg">📅</span>
             </div>
           </div>
-          <p className="text-3xl font-bold">{formatCurrency(data.totalUpcoming)}</p>
+          <p className="text-2xl font-bold">{formatCurrency(data.totalUpcoming)}</p>
         </div>
       </div>
 
       {/* Charts Row 1: Line Chart and Pie Chart */}
-      <div className="grid md:grid-cols-2 gap-6 mb-10">
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
         <ChartContainer title="Monthly Income vs Expenses" icon="📈">
           <ResponsiveContainer width="100%" height={350}>
             <LineChart data={dailyData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -365,10 +365,10 @@ const Dashboard = () => {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-white/60">
-              <span className="text-6xl mb-4">📊</span>
-              <p className="text-lg">No expense data available</p>
-              <p className="text-sm mt-2">Start adding expenses to see your breakdown</p>
+            <div className="flex flex-col items-center justify-center h-48 text-white/60">
+              <span className="text-4xl mb-3">📊</span>
+              <p className="text-sm">No expense data available</p>
+              <p className="text-xs mt-1">Start adding expenses to see your breakdown</p>
             </div>
           )}
         </ChartContainer>
@@ -376,9 +376,9 @@ const Dashboard = () => {
 
       {/* Budget Progress Section */}
       {budgetProgressData.length > 0 && (
-        <Card className="mb-10">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-            <span className="mr-2">📋</span> Budget Progress
+        <Card className="mb-6">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+            <span className="mr-2 text-lg">📋</span> Budget Progress
           </h2>
           <div className="space-y-4">
             {budgetProgressData.map((item, index) => (
@@ -411,10 +411,10 @@ const Dashboard = () => {
       )}
 
       {/* Savings Goals and Upcoming Expenses Row */}
-      <div className="grid md:grid-cols-2 gap-6 mb-10">
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
         <Card>
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-            <span className="mr-2">🎯</span> Savings Goals
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+            <span className="mr-2 text-lg">🎯</span> Savings Goals
           </h2>
           {savingsGoalsData.length > 0 ? (
             <div className="grid grid-cols-2 gap-4">
@@ -462,16 +462,16 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-white/60">
-              <span className="text-6xl mb-4 block">🎯</span>
-              <p>No savings goals yet</p>
+            <div className="text-center py-8 text-white/60">
+              <span className="text-4xl mb-3 block">🎯</span>
+              <p className="text-sm">No savings goals yet</p>
             </div>
           )}
         </Card>
 
         <Card>
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-            <span className="mr-2">📅</span> Upcoming Expenses Forecast
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+            <span className="mr-2 text-lg">📅</span> Upcoming Expenses Forecast
           </h2>
           {forecastData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -502,9 +502,9 @@ const Dashboard = () => {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-center py-12 text-white/60">
-              <span className="text-6xl mb-4 block">📅</span>
-              <p>No upcoming expenses</p>
+            <div className="text-center py-8 text-white/60">
+              <span className="text-4xl mb-3 block">📅</span>
+              <p className="text-sm">No upcoming expenses</p>
             </div>
           )}
         </Card>
@@ -512,8 +512,8 @@ const Dashboard = () => {
 
       {/* Recent Transactions */}
       <Card>
-        <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-          <span className="mr-2">💳</span> Recent Transactions
+        <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+          <span className="mr-2 text-lg">💳</span> Recent Transactions
         </h2>
         {data.recentTransactions.length > 0 ? (
           <div className="overflow-x-auto">

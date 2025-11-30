@@ -545,9 +545,9 @@ const Expenses = () => {
             </div>
           </>
         ) : (
-          <div className="text-center py-12 text-white/60">
-            <span className="text-6xl mb-4 block">💸</span>
-            <p className="text-lg">
+          <div className="text-center py-8 text-white/60">
+            <span className="text-4xl mb-3 block">💸</span>
+            <p className="text-sm">
               {searchQuery || filterCategory ? 'No matching expenses found' : 'No expense records yet'}
             </p>
             <p className="text-sm mt-2">

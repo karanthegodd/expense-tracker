@@ -6,17 +6,17 @@ const Homepage = () => {
   const authenticated = isAuthenticated();
 
   return (
-    <div className="container mx-auto px-4 py-16" style={{ position: 'relative', zIndex: 10 }}>
+    <div className="container mx-auto px-4 py-8" style={{ position: 'relative', zIndex: 10 }}>
       {/* Hero Section */}
-      <div className="text-center mb-20">
-        <div className="inline-block mb-6 px-4 py-2 bg-gradient-to-r from-orange/10 to-light-blue/10 rounded-full border border-orange/20">
-          <span className="text-orange font-semibold">✨ Your Financial Companion</span>
+      <div className="text-center mb-12">
+        <div className="inline-block mb-4 px-3 py-1.5 bg-gradient-to-r from-orange/10 to-light-blue/10 rounded-full border border-orange/20">
+          <span className="text-orange font-semibold text-sm">✨ Your Financial Companion</span>
         </div>
-        <h1 className="text-6xl md:text-7xl font-bold mb-6 text-white">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
           Welcome to <span className="text-orange-300">Ontario Tech</span>
         </h1>
-        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">ExpenseTrack</h2>
-        <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto leading-relaxed">
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">ExpenseTrack</h2>
+        <p className="text-lg md:text-xl text-white/90 mb-6 max-w-3xl mx-auto leading-relaxed">
           Take control of your finances with our intuitive expense tracking system.
           Track income, manage expenses, set budgets, and visualize your financial health.
         </p>
@@ -44,32 +44,32 @@ const Homepage = () => {
       </div>
 
       {/* Features Section */}
-      <div className="grid md:grid-cols-3 gap-8 mt-16">
-        <div className="glass-card p-8 text-center hover:-translate-y-2 transition-all duration-300 group">
-          <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-            <span className="text-4xl">💰</span>
+      <div className="grid md:grid-cols-3 gap-6 mt-12">
+        <div className="glass-card p-6 text-center hover:-translate-y-2 transition-all duration-300 group">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+            <span className="text-2xl">💰</span>
           </div>
-          <h3 className="text-2xl font-bold text-white mb-3">Track Income</h3>
+          <h3 className="text-xl font-bold text-white mb-2">Track Income</h3>
           <p className="text-white/80 leading-relaxed">
             Record all your income sources and keep track of your earnings over time with beautiful visualizations.
           </p>
         </div>
 
-        <div className="glass-card p-8 text-center hover:-translate-y-2 transition-all duration-300 group">
-          <div className="w-20 h-20 bg-gradient-to-br from-orange to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-            <span className="text-4xl">💸</span>
+        <div className="glass-card p-6 text-center hover:-translate-y-2 transition-all duration-300 group">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+            <span className="text-2xl">💸</span>
           </div>
-          <h3 className="text-2xl font-bold text-white mb-3">Manage Expenses</h3>
+          <h3 className="text-xl font-bold text-white mb-2">Manage Expenses</h3>
           <p className="text-white/80 leading-relaxed">
             Categorize and track all your expenses to understand where your money goes with smart insights.
           </p>
         </div>
 
-        <div className="glass-card p-8 text-center hover:-translate-y-2 transition-all duration-300 group">
-          <div className="w-20 h-20 bg-gradient-to-br from-light-blue to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-            <span className="text-4xl">📈</span>
+        <div className="glass-card p-6 text-center hover:-translate-y-2 transition-all duration-300 group">
+          <div className="w-16 h-16 bg-gradient-to-br from-light-blue to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+            <span className="text-2xl">📈</span>
           </div>
-          <h3 className="text-2xl font-bold text-white mb-3">Set Budgets</h3>
+          <h3 className="text-xl font-bold text-white mb-2">Set Budgets</h3>
           <p className="text-white/80 leading-relaxed">
             Create budgets for different categories and stay within your financial limits with real-time alerts.
           </p>
@@ -77,8 +77,8 @@ const Homepage = () => {
       </div>
 
       {/* Trusted by Ontario Tech Students Section */}
-      <div className="mt-20 mb-16 text-center">
-        <p className="text-white/60 text-sm font-semibold uppercase tracking-wider mb-8">
+      <div className="mt-12 mb-10 text-center">
+        <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-6">
           Trusted by Ontario Tech Students
         </p>
         <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-60">
@@ -89,12 +89,12 @@ const Homepage = () => {
       </div>
 
       {/* Testimonials Section */}
-      <div className="mt-20 mb-20">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+      <div className="mt-12 mb-12">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-3 text-white">
             What Ontario Tech Students Are Saying
           </h2>
-          <p className="text-lg text-white/80 max-w-2xl mx-auto">
+          <p className="text-base text-white/80 max-w-2xl mx-auto">
             Join thousands of students who are taking control of their finances
           </p>
         </div>
