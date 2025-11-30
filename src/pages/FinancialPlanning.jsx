@@ -8,6 +8,7 @@ import Button from '../components/Button';
 import Modal from '../components/Modal';
 import { useToast } from '../components/ToastContainer';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
+import { isAuthenticated } from '../utils/auth';
 
 const FinancialPlanning = () => {
   const { showToast } = useToast();
@@ -24,6 +25,7 @@ const FinancialPlanning = () => {
   });
   const [budgetFormErrors, setBudgetFormErrors] = useState({});
   const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(true);
 
   // Savings Goals state
   const [goals, setGoals] = useState([]);
@@ -60,6 +62,9 @@ const FinancialPlanning = () => {
     const loadData = async () => {
       try {
         setLoading(true);
+        // Check authentication status
+        const authStatus = await isAuthenticated();
+        setAuthenticated(authStatus);
         await loadBudgets();
         await loadGoals();
       } catch (error) {
@@ -559,7 +564,7 @@ const FinancialPlanning = () => {
             <span className="mr-2">{editingGoalId ? '✏️' : '➕'}</span>
             {editingGoalId ? 'Edit Savings Goal' : 'Add New Savings Goal'}
           </h2>
-          {!localStorage.getItem('user') && (
+          {!authenticated && (
             <div className="mb-4 p-4 bg-red-500/20 rounded-lg border border-red-400/30">
               <p className="text-red-300 text-sm font-semibold">
                 ⚠️ You must be logged in to create savings goals. Please log in first.
@@ -655,7 +660,7 @@ const FinancialPlanning = () => {
             <span className="mr-2">💸</span>
             Withdraw Money from Goal: {goals.find(g => g.id === selectedGoalId)?.name || 'Goal'}
           </h2>
-          {!localStorage.getItem('user') && (
+          {!authenticated && (
             <div className="mb-4 p-4 bg-red-500/20 rounded-lg border border-red-400/30">
               <p className="text-red-300 text-sm font-semibold">
                 ⚠️ You must be logged in to withdraw money from goals. Please log in first.
@@ -811,7 +816,7 @@ const FinancialPlanning = () => {
             <span className="mr-2">💰</span>
             Add Money to Goal: {goals.find(g => g.id === selectedGoalId)?.name || 'Goal'}
           </h2>
-          {!localStorage.getItem('user') && (
+          {!authenticated && (
             <div className="mb-4 p-4 bg-red-500/20 rounded-lg border border-red-400/30">
               <p className="text-red-300 text-sm font-semibold">
                 ⚠️ You must be logged in to add money to goals. Please log in first.
