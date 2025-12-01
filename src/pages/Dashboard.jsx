@@ -587,9 +587,14 @@ const Dashboard = () => {
   };
 
   // Get pie chart data for budget expenses (grouped by expense name/description)
+  // Excludes refunds - only shows actual expenses (positive amounts)
   const getBudgetExpensePieData = (expenses) => {
     const expenseMap = {};
     expenses.forEach(exp => {
+      const amount = parseFloat(exp.amount || 0);
+      // Skip refunds (negative amounts) - only include actual expenses
+      if (amount <= 0) return;
+      
       const name = exp.name || exp.description || 'Unnamed Expense';
       if (!expenseMap[name]) {
         expenseMap[name] = {
@@ -598,17 +603,16 @@ const Dashboard = () => {
           count: 0
         };
       }
-      expenseMap[name].amount += parseFloat(exp.amount || 0);
+      expenseMap[name].amount += amount;
       expenseMap[name].count += 1;
     });
     
     return Object.values(expenseMap)
       .map(item => ({
-        name: item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name,
+        name: item.name.length > 25 ? item.name.substring(0, 25) + '...' : item.name,
         fullName: item.name,
-        amount: Math.abs(item.amount), // Use absolute value for pie chart
-        count: item.count,
-        isRefund: item.amount < 0
+        amount: item.amount,
+        count: item.count
       }))
       .sort((a, b) => b.amount - a.amount);
   };
@@ -1095,7 +1099,7 @@ const Dashboard = () => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={false}
                       outerRadius={100}
                       fill="#8884d8"
                       dataKey="amount"
@@ -1130,6 +1134,16 @@ const Dashboard = () => {
                         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
                       }}
                     />
+                    <Legend 
+                      formatter={(value, entry) => {
+                        const total = budgetPieData.reduce((sum, item) => sum + item.amount, 0);
+                        const percent = ((entry.payload.amount / total) * 100).toFixed(0);
+                        return `${entry.payload.fullName}: ${percent}%`;
+                      }}
+                      wrapperStyle={{ color: 'white', paddingTop: '20px', fontSize: '13px' }}
+                      iconType="circle"
+                      iconSize={12}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -1137,6 +1151,7 @@ const Dashboard = () => {
               <div className="text-center py-8 text-white/60">
                 <span className="text-4xl mb-3 block">📊</span>
                 <p className="text-sm">No expenses in this budget yet</p>
+                <p className="text-xs mt-1 text-white/50">(Refunds are excluded from the chart)</p>
               </div>
             )}
 
