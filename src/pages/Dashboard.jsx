@@ -311,7 +311,7 @@ const Dashboard = () => {
         
         console.log(`📊 Budget "${budget.category}": Found ${categoryExpenses.length} expenses in category`);
         
-        // Then filter by date range
+        // Then filter by date range and calculate spent
         const spent = categoryExpenses
           .filter(exp => {
             if (!exp.date) {
@@ -329,46 +329,52 @@ const Dashboard = () => {
             expDate.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
             
             // Only count expenses within the budget's active period (from creation to expiration/now)
-            if (startDate && expDate < startDate) {
-              if (budget.category === 'Shopping') {
-                console.log('❌ Expense before startDate:', exp.date, 'startDate:', startDate.toISOString().split('T')[0]);
+            if (startDate) {
+              const startDateNormalized = new Date(startDate);
+              startDateNormalized.setHours(0, 0, 0, 0);
+              if (expDate < startDateNormalized) {
+                if (budget.category === 'Shopping') {
+                  console.log('❌ Expense before startDate:', exp.date, 'startDate:', startDateNormalized.toISOString().split('T')[0]);
+                }
+                return false;
               }
-              return false;
             }
-            if (expDate > endDate) {
+            
+            const endDateNormalized = new Date(endDate);
+            endDateNormalized.setHours(23, 59, 59, 999);
+            if (expDate > endDateNormalized) {
               if (budget.category === 'Shopping') {
-                console.log('❌ Expense after endDate:', exp.date, 'endDate:', endDate.toISOString().split('T')[0]);
+                console.log('❌ Expense after endDate:', exp.date, 'endDate:', endDateNormalized.toISOString().split('T')[0]);
               }
               return false;
             }
             
             if (budget.category === 'Shopping') {
-              console.log('✅ Counting expense:', exp.date, 'amount:', exp.amount, 'name:', exp.name);
+              console.log('✅ Counting expense:', exp.date, 'amount:', exp.amount, 'name:', exp.name || exp.description);
             }
             return true;
           })
           .reduce((sum, exp) => {
             const amount = parseFloat(exp.amount || 0);
             // Use absolute value for budget spending - we want total amount spent
-            // Negative amounts (refunds) reduce the spent total, so subtract them
+            // Negative amounts (refunds) reduce the spent total
             return sum + Math.abs(amount);
           }, 0);
         
-        // Debug logging for Shopping budget
-        if (budget.category === 'Shopping') {
-          console.log('🎯 Budget Debug - Shopping:', {
-            category: budget.category,
-            createdAt: budget.createdAt,
-            startDate: startDate,
-            expirationDate: budget.expirationDate,
-            endDate: endDate,
-            totalCategoryExpenses: categoryExpenses.length,
-            categoryExpenses: categoryExpenses.map(e => ({ date: e.date, amount: e.amount })),
-            spent: spent,
-            budgetAmount: budget.amount,
-            remaining: parseFloat(budget.amount) - spent
-          });
-        }
+        // Debug logging for ALL budgets
+        console.log(`🎯 Budget "${budget.category}":`, {
+          category: budget.category,
+          createdAt: budget.createdAt,
+          startDate: startDate ? startDate.toISOString().split('T')[0] : 'null',
+          expirationDate: budget.expirationDate || 'null',
+          endDate: endDate.toISOString().split('T')[0],
+          totalCategoryExpenses: categoryExpenses.length,
+          allExpenseDates: categoryExpenses.map(e => ({ date: e.date, amount: e.amount, name: e.name || e.description })),
+          spent: spent,
+          budgetAmount: budget.amount,
+          remaining: parseFloat(budget.amount) - spent,
+          percentage: ((spent / parseFloat(budget.amount || 1)) * 100).toFixed(1) + '%'
+        });
       
       const percentage = (spent / parseFloat(budget.amount || 1)) * 100;
       
