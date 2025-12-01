@@ -439,30 +439,50 @@ const FinancialPlanning = () => {
     }).format(amount);
   };
 
-  const getSpentAmount = (category) => {
+  const getSpentAmount = (category, budget = null) => {
     if (!expenses || expenses.length === 0) return 0;
     
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     
-    const monthlyExpenses = expenses.filter(exp => {
+    let filteredExpenses = expenses.filter(exp => {
       if (!exp || !exp.date) return false;
       const expDate = new Date(exp.date);
+      
+      // Filter by category
+      if (exp.category !== category) return false;
+      
+      // If budget has expiration date, only count expenses during active period
+      if (budget && budget.expirationDate) {
+        const expirationDate = new Date(budget.expirationDate);
+        expirationDate.setHours(23, 59, 59, 999); // End of expiration day
+        
+        // Only count expenses on or before expiration date
+        if (expDate > expirationDate) return false;
+      }
+      
+      // Filter by current month/year (for Financial Planning page)
       return (
         expDate.getMonth() === currentMonth &&
-        expDate.getFullYear() === currentYear &&
-        exp.category === category
+        expDate.getFullYear() === currentYear
       );
     });
     
     // Sum all expenses (negative amounts = refunds reduce the total)
-    const total = monthlyExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+    const total = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
     return total;
   };
 
   const getRemainingBudget = (budget) => {
-    const spent = getSpentAmount(budget.category);
+    const spent = getSpentAmount(budget.category, budget);
     return parseFloat(budget.amount) - spent;
+  };
+
+  const isBudgetExpired = (budget) => {
+    if (!budget.expirationDate) return false;
+    const expirationDate = new Date(budget.expirationDate);
+    expirationDate.setHours(23, 59, 59, 999);
+    return new Date() > expirationDate;
   };
 
   const goalsData = goals.map(goal => {
@@ -590,7 +610,6 @@ const FinancialPlanning = () => {
                 value={budgetFormData.expirationDate}
                 onChange={(e) => setBudgetFormData({ ...budgetFormData, expirationDate: e.target.value })}
                 className="input-glass w-full"
-                min={new Date().toISOString().split('T')[0]}
               />
               <p className="text-white/60 text-xs mt-1">
                 💡 Leave empty for a budget that never expires
@@ -1005,17 +1024,25 @@ const FinancialPlanning = () => {
         {budgets.length > 0 ? (
           <div className="grid md:grid-cols-2 gap-6">
             {budgets.map((budget, index) => {
-              const spent = getSpentAmount(budget.category);
+              const expired = isBudgetExpired(budget);
+              const spent = getSpentAmount(budget.category, budget);
               const remaining = getRemainingBudget(budget);
               const percentage = spent > 0 ? (spent / parseFloat(budget.amount)) * 100 : 0;
               const hasRefunds = spent < 0;
               
               return (
-                <Card key={budget.id} className="slide-up hover:scale-[1.02] transition-transform duration-300" style={{ animationDelay: `${0.1 * index}s` }}>
+                <Card key={budget.id} className={`slide-up hover:scale-[1.02] transition-transform duration-300 ${expired ? 'opacity-60' : ''}`} style={{ animationDelay: `${0.1 * index}s` }}>
                   <div className="mb-6">
                   <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
-                        <h3 className="text-2xl font-bold text-white mb-2">{budget.category}</h3>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-2xl font-bold text-white">{budget.category}</h3>
+                          {expired && (
+                            <span className="px-2 py-1 bg-red-500/30 text-red-300 rounded-lg text-xs font-semibold border border-red-400/50">
+                              ⏰ Expired
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-4 mb-3">
                           <div className="px-3 py-1.5 bg-white/10 rounded-lg border border-white/20">
                             <p className="text-xs text-white/60 uppercase tracking-wide mb-0.5">Budget Limit</p>
@@ -1098,10 +1125,21 @@ const FinancialPlanning = () => {
                   
                     {/* Expiration Date */}
                     {budget.expirationDate && (
-                      <div className="mb-4 p-3 bg-orange-500/10 rounded-lg border border-orange-400/20">
-                        <p className="text-xs text-orange-300/80">
-                          📅 Expires: {new Date(budget.expirationDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      <div className={`mb-4 p-3 rounded-lg border ${
+                        expired 
+                          ? 'bg-red-500/10 border-red-400/20' 
+                          : 'bg-orange-500/10 border-orange-400/20'
+                      }`}>
+                        <p className={`text-xs ${
+                          expired ? 'text-red-300/80' : 'text-orange-300/80'
+                        }`}>
+                          📅 {expired ? 'Expired on' : 'Expires'}: {new Date(budget.expirationDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </p>
+                        {expired && (
+                          <p className="text-xs text-red-300/60 mt-1">
+                            This budget no longer tracks new expenses. Only expenses from before expiration are counted.
+                          </p>
+                        )}
                       </div>
                     )}
                     

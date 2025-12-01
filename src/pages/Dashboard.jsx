@@ -199,7 +199,9 @@ const Dashboard = () => {
   // Budget progress data (for selected month)
   const getBudgetProgressData = () => {
     const [year, month] = selectedMonth.split('-').map(Number);
+    const selectedDate = new Date(year, month - 1, 1);
     const budgets = data.budgets || [];
+    
     // Filter expenses for selected month
     const monthlyExpenses = (data.allExpenses || []).filter(exp => {
       if (!exp.date) return false;
@@ -207,26 +209,51 @@ const Dashboard = () => {
       return expDate.getMonth() === month - 1 && expDate.getFullYear() === year;
     });
     
-    return budgets.map(budget => {
-      const spent = monthlyExpenses
-        .filter(exp => exp.category === budget.category)
-        .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
-      
-      const percentage = (spent / parseFloat(budget.amount || 1)) * 100;
-      
-      let color = '#4CAF50'; // Green
-      if (percentage > 90) color = '#FF3B30'; // Red
-      else if (percentage > 50) color = '#FFB300'; // Orange
-      
-      return {
-        category: budget.category,
-        budget: parseFloat(budget.amount),
-        spent: spent,
-        remaining: parseFloat(budget.amount) - spent,
-        percentage: Math.min(percentage, 100),
-        color,
-      };
-    });
+    return budgets
+      .filter(budget => {
+        // Only show budgets that were active during the selected month
+        if (!budget.expirationDate) return true; // Never expires, always show
+        
+        const expirationDate = new Date(budget.expirationDate);
+        expirationDate.setHours(23, 59, 59, 999);
+        
+        // Show if budget was active during selected month
+        // Budget is active if expiration date is on or after the start of selected month
+        return expirationDate >= selectedDate;
+      })
+      .map(budget => {
+        // Filter expenses by category and budget active period
+        const spent = monthlyExpenses
+          .filter(exp => {
+            if (exp.category !== budget.category) return false;
+            
+            // If budget has expiration, only count expenses before/on expiration
+            if (budget.expirationDate) {
+              const expirationDate = new Date(budget.expirationDate);
+              expirationDate.setHours(23, 59, 59, 999);
+              const expDate = new Date(exp.date);
+              return expDate <= expirationDate;
+            }
+            
+            return true;
+          })
+          .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        
+        const percentage = (spent / parseFloat(budget.amount || 1)) * 100;
+        
+        let color = '#4CAF50'; // Green
+        if (percentage > 90) color = '#FF3B30'; // Red
+        else if (percentage > 50) color = '#FFB300'; // Orange
+        
+        return {
+          category: budget.category,
+          budget: parseFloat(budget.amount),
+          spent: spent,
+          remaining: parseFloat(budget.amount) - spent,
+          percentage: Math.min(percentage, 100),
+          color,
+        };
+      });
   };
 
   const budgetProgressData = getBudgetProgressData();
