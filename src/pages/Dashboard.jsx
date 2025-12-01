@@ -1387,7 +1387,7 @@ const Dashboard = () => {
           <span className="mr-2 text-lg">💳</span> Recent Transactions
         </h2>
         {(() => {
-          // Filter transactions for selected month
+          // Filter transactions for selected month and limit to 10 most recent
           const [year, month] = selectedMonth.split('-').map(Number);
           const filteredTransactions = (data.recentTransactions || []).filter(transaction => {
             if (!transaction.date) return false;
@@ -1400,7 +1400,7 @@ const Dashboard = () => {
             const dateB = parseLocalDate(b.date);
             if (!dateA || !dateB) return 0;
             return dateB - dateA;
-          });
+          }).slice(0, 10); // Limit to 10 most recent transactions
           
           return filteredTransactions.length > 0 ? (
             <div className="overflow-x-auto">
