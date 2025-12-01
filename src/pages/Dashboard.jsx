@@ -362,9 +362,8 @@ const Dashboard = () => {
           })
           .reduce((sum, exp) => {
             // Match FinancialPlanning.jsx: use actual amount (negative = refunds reduce total)
-            // But for display purposes, we want to show total spending, so use absolute value
             const amount = parseFloat(exp.amount || 0);
-            return sum + Math.abs(amount);
+            return sum + amount; // Negative amounts (refunds) will reduce the total
           }, 0);
         
         // Debug logging for ALL budgets
@@ -808,24 +807,45 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-4 overflow-hidden relative">
-                  <div
-                    className="h-4 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${Math.min(item.percentage, 100)}%`,
-                      backgroundColor: item.color,
-                      boxShadow: `0 0 10px ${item.color}50`
-                    }}
-                  ></div>
-                  {item.percentage > 100 && (
-                    <div className="absolute top-0 right-0 h-4 w-2 bg-red-500 rounded-r-full"></div>
+                  {item.spent < 0 ? (
+                    // If refunds exceed expenses, show green bar
+                    <div
+                      className="h-4 rounded-full transition-all duration-500 bg-green-500"
+                      style={{ 
+                        width: '100%',
+                        boxShadow: `0 0 10px rgba(34, 197, 94, 0.5)`
+                      }}
+                    ></div>
+                  ) : (
+                    <>
+                      <div
+                        className="h-4 rounded-full transition-all duration-500"
+                        style={{ 
+                          width: `${Math.min(item.percentage, 100)}%`,
+                          backgroundColor: item.color,
+                          boxShadow: `0 0 10px ${item.color}50`
+                        }}
+                      ></div>
+                      {item.percentage > 100 && (
+                        <div className="absolute top-0 right-0 h-4 w-2 bg-red-500 rounded-r-full"></div>
+                      )}
+                    </>
                   )}
                 </div>
                 <p className="text-xs text-white/60 mt-1">
-                  {item.percentage.toFixed(1)}% used
-                  {item.percentage > 100 && (
-                    <span className="text-red-300 ml-2 font-semibold">
-                      (Over by {formatCurrency(item.spent - item.budget)})
+                  {item.spent < 0 ? (
+                    <span className="text-green-300 font-semibold">
+                      ↩️ Refunds exceed expenses by {formatCurrency(Math.abs(item.spent))}
                     </span>
+                  ) : (
+                    <>
+                      {item.percentage.toFixed(1)}% used
+                      {item.percentage > 100 && (
+                        <span className="text-red-300 ml-2 font-semibold">
+                          (Over by {formatCurrency(item.spent - item.budget)})
+                        </span>
+                      )}
+                    </>
                   )}
                 </p>
               </div>
