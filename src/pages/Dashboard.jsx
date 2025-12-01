@@ -73,10 +73,30 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    // Load data immediately
     loadData();
+    
+    // Also try to refresh session first, then load data
+    const initializeData = async () => {
+      try {
+        await manualRefreshSession();
+        await loadData();
+      } catch (error) {
+        console.error('Error initializing data:', error);
+        loadData(); // Fallback to regular load
+      }
+    };
+    
+    // Small delay to ensure auth is ready
+    const timeout = setTimeout(initializeData, 500);
+    
     // Refresh every 30 seconds
     const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, []);
 
   const formatCurrency = (amount) => {

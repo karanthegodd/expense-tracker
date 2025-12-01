@@ -43,13 +43,45 @@ export const getCurrentUserId = async () => {
     
     if (sessionError) {
       console.error('❌ Error getting session:', sessionError)
+      // Try to refresh the session
+      try {
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError && refreshData?.session?.user) {
+          console.log('✅ Session refreshed after error, user ID:', refreshData.session.user.id);
+          return refreshData.session.user.id;
+        }
+      } catch (refreshErr) {
+        console.error('❌ Error refreshing session:', refreshErr);
+      }
       return null
     }
     
     console.log('getCurrentUserId: Session exists?', !!session);
     
-    // If we have a session, get the user
+    // If we have a session, check if it's expired
     if (session) {
+      const expiresAt = session.expires_at;
+      const now = Math.floor(Date.now() / 1000);
+      const isExpired = expiresAt && expiresAt < now;
+      
+      if (isExpired) {
+        console.log('⚠️ Session expired, attempting refresh...');
+        try {
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error('❌ Error refreshing expired session:', refreshError);
+            return null;
+          }
+          if (refreshData?.session?.user) {
+            console.log('✅ Expired session refreshed, user ID:', refreshData.session.user.id);
+            return refreshData.session.user.id;
+          }
+        } catch (refreshErr) {
+          console.error('❌ Error refreshing expired session:', refreshErr);
+          return null;
+        }
+      }
+      
       console.log('getCurrentUserId: Session found, getting user...');
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       
@@ -57,14 +89,18 @@ export const getCurrentUserId = async () => {
         console.error('❌ Error getting user:', userError)
         // Try to refresh the session if there's an error
         console.log('Attempting to refresh session...');
-        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-        if (refreshError) {
-          console.error('❌ Error refreshing session:', refreshError);
-          return null;
-        }
-        if (refreshData?.session?.user) {
-          console.log('✅ Session refreshed, user ID:', refreshData.session.user.id);
-          return refreshData.session.user.id;
+        try {
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.error('❌ Error refreshing session:', refreshError);
+            return null;
+          }
+          if (refreshData?.session?.user) {
+            console.log('✅ Session refreshed, user ID:', refreshData.session.user.id);
+            return refreshData.session.user.id;
+          }
+        } catch (refreshErr) {
+          console.error('❌ Error refreshing session:', refreshErr);
         }
         return null
       }
