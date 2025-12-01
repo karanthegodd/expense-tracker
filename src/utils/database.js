@@ -328,6 +328,7 @@ export const getBudgets = async (email = null) => {
       category: item.category || '',
       amount: parseFloat(item.amount),
       expirationDate: item.expiration_date || null,
+      createdAt: item.created_at || null,
     }));
   } catch (error) {
     console.error('Error in getBudgets:', error);
@@ -361,6 +362,7 @@ export const addBudget = async (budget, email = null) => {
       category: data.category || '',
       amount: parseFloat(data.amount),
       expirationDate: data.expiration_date || null,
+      createdAt: data.created_at || null,
     };
   } catch (error) {
     console.error('Error in addBudget:', error);
@@ -397,6 +399,7 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
       category: data.category || '',
       amount: parseFloat(data.amount),
       expirationDate: data.expiration_date || null,
+      createdAt: data.created_at || null,
     };
   } catch (error) {
     console.error('Error in updateBudget:', error);

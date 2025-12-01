@@ -442,9 +442,6 @@ const FinancialPlanning = () => {
   const getSpentAmount = (category, budget = null) => {
     if (!expenses || expenses.length === 0) return 0;
     
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    
     let filteredExpenses = expenses.filter(exp => {
       if (!exp || !exp.date) return false;
       const expDate = new Date(exp.date);
@@ -452,20 +449,27 @@ const FinancialPlanning = () => {
       // Filter by category
       if (exp.category !== category) return false;
       
-      // If budget has expiration date, only count expenses during active period
-      if (budget && budget.expirationDate) {
-        const expirationDate = new Date(budget.expirationDate);
-        expirationDate.setHours(23, 59, 59, 999); // End of expiration day
-        
-        // Only count expenses on or before expiration date
-        if (expDate > expirationDate) return false;
+      // Determine the start date (budget creation date or beginning of time)
+      let startDate = null;
+      if (budget && budget.createdAt) {
+        startDate = new Date(budget.createdAt);
+        startDate.setHours(0, 0, 0, 0); // Start of creation day
       }
       
-      // Filter by current month/year (for Financial Planning page)
-      return (
-        expDate.getMonth() === currentMonth &&
-        expDate.getFullYear() === currentYear
-      );
+      // Determine the end date (expiration date or current date)
+      let endDate = new Date();
+      if (budget && budget.expirationDate) {
+        endDate = new Date(budget.expirationDate);
+        endDate.setHours(23, 59, 59, 999); // End of expiration day
+      } else {
+        endDate.setHours(23, 59, 59, 999); // End of today
+      }
+      
+      // Only count expenses within the budget's active period
+      if (startDate && expDate < startDate) return false;
+      if (expDate > endDate) return false;
+      
+      return true;
     });
     
     // Sum all expenses (negative amounts = refunds reduce the total)

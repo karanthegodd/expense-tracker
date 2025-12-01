@@ -201,13 +201,7 @@ const Dashboard = () => {
     const [year, month] = selectedMonth.split('-').map(Number);
     const selectedDate = new Date(year, month - 1, 1);
     const budgets = data.budgets || [];
-    
-    // Filter expenses for selected month
-    const monthlyExpenses = (data.allExpenses || []).filter(exp => {
-      if (!exp.date) return false;
-      const expDate = new Date(exp.date);
-      return expDate.getMonth() === month - 1 && expDate.getFullYear() === year;
-    });
+    const allExpenses = data.allExpenses || [];
     
     return budgets
       .filter(budget => {
@@ -222,18 +216,32 @@ const Dashboard = () => {
         return expirationDate >= selectedDate;
       })
       .map(budget => {
-        // Filter expenses by category and budget active period
-        const spent = monthlyExpenses
+        // Calculate cumulative spending from budget creation to expiration (or current date)
+        let startDate = null;
+        if (budget.createdAt) {
+          startDate = new Date(budget.createdAt);
+          startDate.setHours(0, 0, 0, 0);
+        }
+        
+        let endDate = new Date();
+        if (budget.expirationDate) {
+          endDate = new Date(budget.expirationDate);
+          endDate.setHours(23, 59, 59, 999);
+        } else {
+          endDate.setHours(23, 59, 59, 999);
+        }
+        
+        // Filter expenses by category and budget active period (cumulative)
+        const spent = allExpenses
           .filter(exp => {
+            if (!exp.date) return false;
             if (exp.category !== budget.category) return false;
             
-            // If budget has expiration, only count expenses before/on expiration
-            if (budget.expirationDate) {
-              const expirationDate = new Date(budget.expirationDate);
-              expirationDate.setHours(23, 59, 59, 999);
-              const expDate = new Date(exp.date);
-              return expDate <= expirationDate;
-            }
+            const expDate = new Date(exp.date);
+            
+            // Only count expenses within the budget's active period
+            if (startDate && expDate < startDate) return false;
+            if (expDate > endDate) return false;
             
             return true;
           })
