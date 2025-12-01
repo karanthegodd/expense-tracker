@@ -227,19 +227,21 @@ const Dashboard = () => {
         })
           .reduce((sum, exp) => {
             const amount = parseFloat(exp.amount || 0);
-            // Use actual amount - refunds (negative) reduce the cumulative total
-            return sum + amount;
+            // For chart display: use absolute value to show cumulative spending
+            // Refunds (negative) reduce the cumulative total for budget calculations
+            // but for chart visualization, we show total spending as positive
+            return sum + Math.abs(amount);
           }, 0);
       
       // Add to cumulative totals
       cumulativeIncome += dayIncome;
-      cumulativeExpenses += dayExpense; // This can go down if refunds exceed expenses
+      cumulativeExpenses += dayExpense; // Cumulative spending (always positive for chart)
       
       dailyData.push({
         day: day,
         date: dateStr,
         income: cumulativeIncome,
-        expenses: cumulativeExpenses, // Can be negative if refunds exceed expenses
+        expenses: cumulativeExpenses, // Cumulative spending (always positive for chart display)
       });
     }
     
