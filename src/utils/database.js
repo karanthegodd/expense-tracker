@@ -327,6 +327,7 @@ export const getBudgets = async (email = null) => {
       id: item.id,
       category: item.category || '',
       amount: parseFloat(item.amount),
+      startDate: item.start_date || null,
       expirationDate: item.expiration_date || null,
       createdAt: item.created_at || null,
     }));
@@ -347,6 +348,7 @@ export const addBudget = async (budget, email = null) => {
         user_id: userId,
         category: budget.category || '',
         amount: parseFloat(budget.amount),
+        start_date: budget.startDate || budget.start_date || null,
         expiration_date: budget.expirationDate || budget.expiration_date || null,
       })
       .select()
@@ -361,6 +363,7 @@ export const addBudget = async (budget, email = null) => {
       id: data.id,
       category: data.category || '',
       amount: parseFloat(data.amount),
+      startDate: data.start_date || null,
       expirationDate: data.expiration_date || null,
       createdAt: data.created_at || null,
     };
@@ -378,6 +381,8 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
     const updateData = {};
     if (updatedBudget.category !== undefined) updateData.category = updatedBudget.category;
     if (updatedBudget.amount !== undefined) updateData.amount = parseFloat(updatedBudget.amount);
+    if (updatedBudget.startDate !== undefined) updateData.start_date = updatedBudget.startDate || null;
+    if (updatedBudget.start_date !== undefined) updateData.start_date = updatedBudget.start_date || null;
     if (updatedBudget.expirationDate !== undefined) updateData.expiration_date = updatedBudget.expirationDate || null;
     if (updatedBudget.expiration_date !== undefined) updateData.expiration_date = updatedBudget.expiration_date || null;
 
@@ -398,6 +403,7 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
       id: data.id,
       category: data.category || '',
       amount: parseFloat(data.amount),
+      startDate: data.start_date || null,
       expirationDate: data.expiration_date || null,
       createdAt: data.created_at || null,
     };

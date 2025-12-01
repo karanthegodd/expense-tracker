@@ -219,15 +219,19 @@ const Dashboard = () => {
         return expirationDate >= selectedDate;
       })
       .map(budget => {
-        // Calculate cumulative spending from budget creation to expiration (or current date)
+        // Calculate cumulative spending from budget start date to expiration (or current date)
         // Budgets always show cumulative spending, not filtered by selected month
+        // Start date: use startDate if set, otherwise use createdAt
         let startDate = null;
-        if (budget.createdAt) {
+        if (budget.startDate) {
+          startDate = new Date(budget.startDate);
+          startDate.setHours(0, 0, 0, 0);
+        } else if (budget.createdAt) {
           startDate = new Date(budget.createdAt);
           startDate.setHours(0, 0, 0, 0);
         }
         
-        // End date: expiration date if set and passed, otherwise use current date
+        // End date: expiration date if set and passed, otherwise use current date (never expires)
         let endDate = new Date();
         endDate.setHours(23, 59, 59, 999); // End of today
         

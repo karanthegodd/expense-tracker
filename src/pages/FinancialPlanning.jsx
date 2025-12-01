@@ -23,6 +23,7 @@ const FinancialPlanning = () => {
   const [budgetFormData, setBudgetFormData] = useState({
     category: '',
     amount: '',
+    startDate: '',
     expirationDate: '',
   });
   const [budgetFormErrors, setBudgetFormErrors] = useState({});
@@ -204,6 +205,7 @@ const FinancialPlanning = () => {
     setBudgetFormData({
       category: budget.category,
       amount: budget.amount,
+      startDate: budget.startDate || '',
       expirationDate: budget.expirationDate || '',
     });
     setEditingBudgetId(budget.id);
@@ -237,6 +239,7 @@ const FinancialPlanning = () => {
     setBudgetFormData({
       category: '',
       amount: '',
+      startDate: '',
       expirationDate: '',
     });
     setEditingBudgetId(null);
@@ -449,20 +452,29 @@ const FinancialPlanning = () => {
       // Filter by category
       if (exp.category !== category) return false;
       
-      // Determine the start date (budget creation date or beginning of time)
+      // Determine the start date: use startDate if set, otherwise use createdAt, otherwise use a very old date
       let startDate = null;
-      if (budget && budget.createdAt) {
-        startDate = new Date(budget.createdAt);
-        startDate.setHours(0, 0, 0, 0); // Start of creation day
+      if (budget) {
+        if (budget.startDate) {
+          startDate = new Date(budget.startDate);
+          startDate.setHours(0, 0, 0, 0); // Start of start date
+        } else if (budget.createdAt) {
+          startDate = new Date(budget.createdAt);
+          startDate.setHours(0, 0, 0, 0); // Start of creation day
+        }
       }
       
-      // Determine the end date (expiration date or current date)
+      // Determine the end date: expiration date if set, otherwise current date (never expires)
       let endDate = new Date();
+      endDate.setHours(23, 59, 59, 999); // End of today
+      
       if (budget && budget.expirationDate) {
-        endDate = new Date(budget.expirationDate);
-        endDate.setHours(23, 59, 59, 999); // End of expiration day
-      } else {
-        endDate.setHours(23, 59, 59, 999); // End of today
+        const expirationDate = new Date(budget.expirationDate);
+        expirationDate.setHours(23, 59, 59, 999); // End of expiration day
+        // Use the earlier of: expiration date or current date
+        if (expirationDate < endDate) {
+          endDate = expirationDate;
+        }
       }
       
       // Only count expenses within the budget's active period
@@ -605,20 +617,37 @@ const FinancialPlanning = () => {
                 </p>
               )}
             </div>
-            <div>
-              <label className="block text-white/90 font-semibold mb-2 text-sm">
-                Expiration Date (Optional)
-              </label>
-              <input
-                type="date"
-                value={budgetFormData.expirationDate}
-                onChange={(e) => setBudgetFormData({ ...budgetFormData, expirationDate: e.target.value })}
-                className="input-glass w-full"
-                step="1"
-              />
-              <p className="text-white/60 text-xs mt-1">
-                💡 Leave empty for a budget that never expires. You can select any date (past, present, or future).
-              </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-white/90 font-semibold mb-2 text-sm">
+                  Start Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={budgetFormData.startDate}
+                  onChange={(e) => setBudgetFormData({ ...budgetFormData, startDate: e.target.value })}
+                  className="input-glass w-full"
+                  step="1"
+                />
+                <p className="text-white/60 text-xs mt-1">
+                  💡 Leave empty to start tracking from today. Only expenses from this date onwards are counted.
+                </p>
+              </div>
+              <div>
+                <label className="block text-white/90 font-semibold mb-2 text-sm">
+                  End Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={budgetFormData.expirationDate}
+                  onChange={(e) => setBudgetFormData({ ...budgetFormData, expirationDate: e.target.value })}
+                  className="input-glass w-full"
+                  step="1"
+                />
+                <p className="text-white/60 text-xs mt-1">
+                  💡 Leave empty for a budget that never expires. Expenses are tracked until this date.
+                </p>
+              </div>
             </div>
             <div className="flex space-x-4 pt-2">
               <Button type="submit" variant="primary" className="flex-1">
@@ -1128,22 +1157,41 @@ const FinancialPlanning = () => {
                     </div>
                   </div>
                   
-                    {/* Expiration Date */}
-                    {budget.expirationDate && (
-                      <div className={`mb-4 p-3 rounded-lg border ${
-                        expired 
-                          ? 'bg-red-500/10 border-red-400/20' 
-                          : 'bg-orange-500/10 border-orange-400/20'
-                      }`}>
-                        <p className={`text-xs ${
-                          expired ? 'text-red-300/80' : 'text-orange-300/80'
-                        }`}>
-                          📅 {expired ? 'Expired on' : 'Expires'}: {new Date(budget.expirationDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </p>
-                        {expired && (
-                          <p className="text-xs text-red-300/60 mt-1">
-                            This budget no longer tracks new expenses. Only expenses from before expiration are counted.
-                          </p>
+                    {/* Start and End Dates */}
+                    {(budget.startDate || budget.expirationDate) && (
+                      <div className="mb-4 space-y-2">
+                        {budget.startDate && (
+                          <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
+                            <p className="text-xs text-blue-300/80">
+                              📅 Starts: {new Date(budget.startDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                            <p className="text-xs text-blue-300/60 mt-1">
+                              Only expenses from this date onwards are counted.
+                            </p>
+                          </div>
+                        )}
+                        {budget.expirationDate && (
+                          <div className={`p-3 rounded-lg border ${
+                            expired 
+                              ? 'bg-red-500/10 border-red-400/20' 
+                              : 'bg-orange-500/10 border-orange-400/20'
+                          }`}>
+                            <p className={`text-xs ${
+                              expired ? 'text-red-300/80' : 'text-orange-300/80'
+                            }`}>
+                              📅 {expired ? 'Expired on' : 'Expires'}: {new Date(budget.expirationDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                            {expired && (
+                              <p className="text-xs text-red-300/60 mt-1">
+                                This budget no longer tracks new expenses. Only expenses from before expiration are counted.
+                              </p>
+                            )}
+                            {!expired && (
+                              <p className="text-xs text-orange-300/60 mt-1">
+                                Expenses are tracked until this date. After expiration, tracking stops.
+                              </p>
+                            )}
+                          </div>
                         )}
                       </div>
                     )}
