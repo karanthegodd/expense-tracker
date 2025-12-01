@@ -9,7 +9,7 @@ import Modal from '../components/Modal';
 import { useToast } from '../components/ToastContainer';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
 import { isAuthenticated } from '../utils/auth';
-import { formatDateEST } from '../utils/dateUtils';
+import { formatDateEST, parseLocalDate } from '../utils/dateUtils';
 
 const FinancialPlanning = () => {
   const { showToast } = useToast();
@@ -464,17 +464,21 @@ const FinancialPlanning = () => {
     
     let filteredExpenses = expenses.filter(exp => {
       if (!exp || !exp.date) return false;
-      const expDate = new Date(exp.date);
+      // Use parseLocalDate for consistent date parsing (matches Dashboard)
+      const expDate = parseLocalDate(exp.date);
+      if (!expDate) return false;
       
       // Filter by category
       if (exp.category !== category) return false;
       
-      // Determine the start date: use startDate if set, otherwise use createdAt, otherwise use a very old date
+      // Determine the start date: use startDate if set, otherwise use createdAt
       let startDate = null;
       if (budget) {
         if (budget.startDate) {
-          startDate = new Date(budget.startDate);
-          startDate.setHours(0, 0, 0, 0); // Start of start date
+          startDate = parseLocalDate(budget.startDate);
+          if (startDate) {
+            startDate.setHours(0, 0, 0, 0); // Start of start date
+          }
         } else if (budget.createdAt) {
           startDate = new Date(budget.createdAt);
           startDate.setHours(0, 0, 0, 0); // Start of creation day
@@ -486,11 +490,13 @@ const FinancialPlanning = () => {
       endDate.setHours(23, 59, 59, 999); // End of today
       
       if (budget && budget.expirationDate) {
-        const expirationDate = new Date(budget.expirationDate);
-        expirationDate.setHours(23, 59, 59, 999); // End of expiration day
-        // Use the earlier of: expiration date or current date
-        if (expirationDate < endDate) {
-          endDate = expirationDate;
+        const expirationDate = parseLocalDate(budget.expirationDate);
+        if (expirationDate) {
+          expirationDate.setHours(23, 59, 59, 999); // End of expiration day
+          // Use the earlier of: expiration date or current date
+          if (expirationDate < endDate) {
+            endDate = expirationDate;
+          }
         }
       }
       
@@ -502,7 +508,11 @@ const FinancialPlanning = () => {
     });
     
     // Sum all expenses (negative amounts = refunds reduce the total)
-    const total = filteredExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+    // This correctly subtracts refunds: 100 + (-50) = 50
+    const total = filteredExpenses.reduce((sum, exp) => {
+      const amount = parseFloat(exp.amount || 0);
+      return sum + amount; // Negative amounts (refunds) subtract from total
+    }, 0);
     return total;
   };
 
@@ -513,7 +523,8 @@ const FinancialPlanning = () => {
 
   const isBudgetExpired = (budget) => {
     if (!budget.expirationDate) return false;
-    const expirationDate = new Date(budget.expirationDate);
+    const expirationDate = parseLocalDate(budget.expirationDate);
+    if (!expirationDate) return false;
     expirationDate.setHours(23, 59, 59, 999);
     return new Date() > expirationDate;
   };
