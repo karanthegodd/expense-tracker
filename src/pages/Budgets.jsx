@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getBudgets, addBudget, updateBudget, deleteBudget, getExpenses } from '../utils/localStorage';
+import { getBudgets, addBudget, updateBudget, deleteBudget, getExpenses } from '../utils/database';
 import Card from '../components/Card';
 import Button from '../components/Button';
 

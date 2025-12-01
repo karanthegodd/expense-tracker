@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getIncomes, addIncome, updateIncome, deleteIncome } from '../utils/localStorage';
+import { getIncomes, addIncome, updateIncome, deleteIncome } from '../utils/database';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   getBudgets, addBudget, updateBudget, deleteBudget, getExpenses,
   getSavingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal, addContributionToGoal, withdrawFromGoal, getAvailableFunds
-} from '../utils/localStorage';
+} from '../utils/database';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';

@@ -1,7 +1,7 @@
 // Debug utility to check authentication and data access
 import { supabase } from './supabase';
 import { getCurrentUserId } from './supabase';
-import { getIncomes, getExpenses, getBudgets, getSavingsGoals } from './localStorage';
+import { getIncomes, getExpenses, getBudgets, getSavingsGoals } from './database';
 
 export const debugAuth = async () => {
   console.log('🔍 === AUTH DEBUG START ===');

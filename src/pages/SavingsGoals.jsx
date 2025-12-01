@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSavingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal, addContributionToGoal, getAvailableFunds } from '../utils/localStorage';
+import { getSavingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal, addContributionToGoal, getAvailableFunds } from '../utils/database';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getRecurringPayments, addRecurringPayment, updateRecurringPayment, deleteRecurringPayment, addExpense } from '../utils/localStorage';
+import { getRecurringPayments, addRecurringPayment, updateRecurringPayment, deleteRecurringPayment, addExpense } from '../utils/database';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';

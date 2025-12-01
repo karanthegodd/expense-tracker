@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getExpenses, addExpense, updateExpense, deleteExpense } from '../utils/localStorage';
+import { getExpenses, addExpense, updateExpense, deleteExpense } from '../utils/database';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';

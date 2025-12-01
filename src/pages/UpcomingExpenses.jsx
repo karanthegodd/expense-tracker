@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getUpcomingExpenses, addUpcomingExpense, updateUpcomingExpense, deleteUpcomingExpense } from '../utils/localStorage';
+import { getUpcomingExpenses, addUpcomingExpense, updateUpcomingExpense, deleteUpcomingExpense } from '../utils/database';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';

@@ -1,4 +1,4 @@
-// Database Helper Functions using Supabase - Per-User Storage
+// Database Helper Functions using Supabase - Per-User Data Management
 
 import { supabase, getCurrentUserId } from './supabase';
 import { getCurrentUser } from './auth';

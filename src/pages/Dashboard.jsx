@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getTotals } from '../utils/localStorage';
+import { getTotals } from '../utils/database';
 import Card from '../components/Card';
 import ChartContainer from '../components/ChartContainer';
 import Button from '../components/Button';
