@@ -416,7 +416,13 @@ const Dashboard = () => {
           .reduce((sum, exp) => {
             // Match FinancialPlanning.jsx: use actual amount (negative = refunds reduce total)
             const amount = parseFloat(exp.amount || 0);
-            return sum + amount; // Negative amounts (refunds) will reduce the total
+            // Negative amounts (refunds) subtract from the total
+            // Positive amounts (expenses) add to the total
+            const result = sum + amount;
+            if (budget.category === 'Shopping') {
+              console.log(`  Adding expense: ${exp.name || exp.description}, amount: ${amount}, running total: ${result}`);
+            }
+            return result;
           }, 0);
         
         // Debug logging for ALL budgets
