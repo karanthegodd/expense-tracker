@@ -240,7 +240,7 @@ const Dashboard = () => {
         day: day,
         date: dateStr,
         income: cumulativeIncome,
-        expenses: Math.max(0, cumulativeExpenses), // Show as 0 if refunds exceed expenses (for chart display)
+        expenses: cumulativeExpenses, // Cumulative spending (always positive for chart display)
       });
     }
     
@@ -831,7 +831,13 @@ const Dashboard = () => {
                   <span className="font-semibold text-white">{item.category}</span>
                   <div className="flex items-center space-x-4 text-sm text-white/80">
                     <span>Budget: {formatCurrency(item.budget)}</span>
-                    <span>Spent: {formatCurrency(item.spent)}</span>
+                    <span>
+                      {item.spent < 0 ? (
+                        <span className="text-green-300">Net Spent: {formatCurrency(Math.abs(item.spent))} <span className="text-xs">(Refunds applied)</span></span>
+                      ) : (
+                        <span>Spent: {formatCurrency(item.spent)}</span>
+                      )}
+                    </span>
                     <span className={`font-bold ${item.remaining >= 0 ? 'text-green-300' : 'text-red-300'}`}>
                       Remaining: {formatCurrency(item.remaining)}
                     </span>
@@ -839,11 +845,11 @@ const Dashboard = () => {
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-4 overflow-hidden relative">
                   {item.spent < 0 ? (
-                    // If refunds exceed expenses, show green bar
+                    // If refunds exceed expenses, show green bar at 0%
                     <div
                       className="h-4 rounded-full transition-all duration-500 bg-green-500"
                       style={{ 
-                        width: '100%',
+                        width: '0%',
                         boxShadow: `0 0 10px rgba(34, 197, 94, 0.5)`
                       }}
                     ></div>
@@ -858,7 +864,23 @@ const Dashboard = () => {
                         }}
                       ></div>
                       {item.percentage > 100 && (
-                        <div className="absolute top-0 right-0 h-4 w-2 bg-red-500 rounded-r-full"></div>
+                        <div 
+                          className="absolute top-0 left-0 h-4 rounded-full bg-red-500 transition-all duration-500"
+                          style={{ 
+                            width: `${Math.min(item.percentage, 100)}%`,
+                            boxShadow: `0 0 10px rgba(255, 59, 48, 0.5)`
+                          }}
+                        ></div>
+                      )}
+                      {item.percentage > 100 && (
+                        <div 
+                          className="absolute top-0 h-4 bg-red-600 rounded-r-full"
+                          style={{ 
+                            left: '100%',
+                            width: `${Math.min(item.percentage - 100, 20)}%`,
+                            maxWidth: '20%'
+                          }}
+                        ></div>
                       )}
                     </>
                   )}
