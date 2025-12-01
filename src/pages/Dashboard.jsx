@@ -3,6 +3,7 @@ import { getTotals } from '../utils/localStorage';
 import Card from '../components/Card';
 import ChartContainer from '../components/ChartContainer';
 import Button from '../components/Button';
+import { isAuthenticated } from '../utils/auth';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar 
@@ -21,13 +22,27 @@ const Dashboard = () => {
     avgBudgetProgress: 0,
     totalUpcoming: 0,
   });
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const loadData = async () => {
     try {
+      // Check if user is authenticated first
+      const authenticated = await isAuthenticated();
+      if (!authenticated) {
+        setSessionExpired(true);
+        return;
+      }
+      
+      setSessionExpired(false);
       const totals = await getTotals();
       setData(totals);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      // Check if error is due to authentication
+      const authenticated = await isAuthenticated();
+      if (!authenticated) {
+        setSessionExpired(true);
+      }
       // Set default empty data on error
       setData({
         totalIncome: 0,
@@ -196,6 +211,29 @@ const Dashboard = () => {
           🔄 Refresh Data
         </Button>
       </div>
+
+      {sessionExpired && (
+        <Card className="mb-6 border-2 border-orange-400/50 bg-orange-500/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">⚠️</span>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1">Session Expired</h3>
+                <p className="text-white/80 text-sm">
+                  Your session has expired. Please refresh the page or log in again to see your data.
+                </p>
+              </div>
+            </div>
+            <Button 
+              variant="primary" 
+              onClick={() => window.location.reload()}
+              className="shadow-xl"
+            >
+              🔄 Refresh Page
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">

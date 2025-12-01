@@ -12,6 +12,7 @@ import UpcomingExpenses from './pages/UpcomingExpenses';
 import RecurringPayments from './pages/RecurringPayments';
 import Settings from './pages/Settings';
 import { isAuthenticated } from './utils/auth';
+import { supabase } from './utils/supabase';
 import { ToastProvider } from './components/ToastContainer';
 
 const PrivateRoute = ({ children }) => {
@@ -42,6 +43,27 @@ const PrivateRoute = ({ children }) => {
 };
 
 function App() {
+  // Set up auth state listener to handle session refresh
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session ? 'Session active' : 'No session');
+      
+      // If session is refreshed, reload the page to update all components
+      if (event === 'TOKEN_REFRESHED' && session) {
+        console.log('Session refreshed successfully');
+      }
+      
+      // If signed out, ensure we redirect to login
+      if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   // Debug: Check if App is rendering
   console.log('App component is rendering');
   

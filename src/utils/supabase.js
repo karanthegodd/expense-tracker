@@ -13,12 +13,51 @@ if (!supabaseUrl || !supabaseAnonKey) {
   })
 }
 
-// Create Supabase client (will work even with empty strings, but will fail on API calls)
-export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder-key')
+// Create Supabase client with auto-refresh enabled
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
+  }
+)
 
-// Helper to get current user ID
+// Set up auth state change listener to handle session refresh
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+    console.log('Auth state changed:', event, session ? 'Session active' : 'No session')
+  }
+})
+
+// Helper to get current user ID with automatic session refresh
 export const getCurrentUserId = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user?.id || null
+  try {
+    // First try to get the session (this will auto-refresh if needed)
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError) {
+      console.error('Error getting session:', sessionError)
+      return null
+    }
+    
+    // If we have a session, get the user
+    if (session) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError) {
+        console.error('Error getting user:', userError)
+        return null
+      }
+      return user?.id || null
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Error in getCurrentUserId:', error)
+    return null
+  }
 }
 
