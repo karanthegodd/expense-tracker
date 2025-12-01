@@ -610,9 +610,10 @@ const FinancialPlanning = () => {
                 value={budgetFormData.expirationDate}
                 onChange={(e) => setBudgetFormData({ ...budgetFormData, expirationDate: e.target.value })}
                 className="input-glass w-full"
+                step="1"
               />
               <p className="text-white/60 text-xs mt-1">
-                💡 Leave empty for a budget that never expires
+                💡 Leave empty for a budget that never expires. You can select any date (past, present, or future).
               </p>
             </div>
             <div className="flex space-x-4 pt-2">
