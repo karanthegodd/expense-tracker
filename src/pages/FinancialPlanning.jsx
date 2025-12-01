@@ -17,6 +17,7 @@ const FinancialPlanning = () => {
   // Budgets state
   const [budgets, setBudgets] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [budgetRefreshKey, setBudgetRefreshKey] = useState(0);
   const [showBudgetForm, setShowBudgetForm] = useState(false);
   const [editingBudgetId, setEditingBudgetId] = useState(null);
   const [deleteBudgetModalOpen, setDeleteBudgetModalOpen] = useState(false);
@@ -198,9 +199,11 @@ const FinancialPlanning = () => {
           const expensesData = await getExpenses();
           setExpenses(expensesData || []);
           // Force refresh budgets - wait a bit to ensure DB is updated
-          await new Promise(resolve => setTimeout(resolve, 200));
-          await loadBudgets();
-          console.log('✅ Budgets refreshed after update');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const refreshedBudgets = await getBudgets();
+          setBudgets([...refreshedBudgets || []]);
+          setBudgetRefreshKey(prev => prev + 1);
+          console.log('✅ Budgets refreshed after update, count:', (refreshedBudgets || []).length);
         } else {
           // Check console for detailed error - it's already logged there
           showToast('Failed to update budget. Check console for details.', 'error');
@@ -225,6 +228,8 @@ const FinancialPlanning = () => {
           
           // Force state update by creating new array reference
           setBudgets([...refreshedBudgets || []]);
+          // Force re-render by updating refresh key
+          setBudgetRefreshKey(prev => prev + 1);
           
           console.log('✅ Budgets state updated, new count:', (refreshedBudgets || []).length);
           
@@ -1109,7 +1114,7 @@ const FinancialPlanning = () => {
         </div>
         
         {budgets.length > 0 ? (
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-6" key={`budgets-${budgetRefreshKey}`}>
             {budgets.map((budget, index) => {
               const expired = isBudgetExpired(budget);
               const spent = getSpentAmount(budget.category, budget);
