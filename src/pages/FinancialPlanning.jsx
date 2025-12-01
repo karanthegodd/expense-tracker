@@ -170,8 +170,19 @@ const FinancialPlanning = () => {
     }
     
     try {
+      // Normalize date fields: convert empty strings to null
+      const normalizedBudgetData = {
+        ...budgetFormData,
+        startDate: budgetFormData.startDate && budgetFormData.startDate.trim() !== '' 
+          ? budgetFormData.startDate 
+          : null,
+        expirationDate: budgetFormData.expirationDate && budgetFormData.expirationDate.trim() !== '' 
+          ? budgetFormData.expirationDate 
+          : null,
+      };
+      
       if (editingBudgetId) {
-        const result = await updateBudget(editingBudgetId, budgetFormData);
+        const result = await updateBudget(editingBudgetId, normalizedBudgetData);
         if (result) {
           showToast('Budget updated', 'success');
           resetBudgetForm();
@@ -183,7 +194,7 @@ const FinancialPlanning = () => {
           showToast('Failed to update budget', 'error');
         }
       } else {
-        const result = await addBudget(budgetFormData);
+        const result = await addBudget(normalizedBudgetData);
         if (result) {
           showToast('Budget added', 'success');
           resetBudgetForm();
@@ -197,7 +208,8 @@ const FinancialPlanning = () => {
       }
     } catch (error) {
       console.error('Error in handleBudgetSubmit:', error);
-      showToast('An error occurred. Please try again.', 'error');
+      console.error('Error details:', error.message, error.stack);
+      showToast(`An error occurred: ${error.message || 'Please try again.'}`, 'error');
     }
   };
 

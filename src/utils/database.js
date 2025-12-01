@@ -376,15 +376,40 @@ export const addBudget = async (budget, email = null) => {
 export const updateBudget = async (id, updatedBudget, email = null) => {
   try {
     const userId = await getCurrentUserId();
-    if (!userId) return null;
+    if (!userId) {
+      console.error('❌ updateBudget: No user ID');
+      return null;
+    }
 
     const updateData = {};
     if (updatedBudget.category !== undefined) updateData.category = updatedBudget.category;
     if (updatedBudget.amount !== undefined) updateData.amount = parseFloat(updatedBudget.amount);
-    if (updatedBudget.startDate !== undefined) updateData.start_date = updatedBudget.startDate || null;
-    if (updatedBudget.start_date !== undefined) updateData.start_date = updatedBudget.start_date || null;
-    if (updatedBudget.expirationDate !== undefined) updateData.expiration_date = updatedBudget.expirationDate || null;
-    if (updatedBudget.expiration_date !== undefined) updateData.expiration_date = updatedBudget.expiration_date || null;
+    
+    // Handle startDate: convert empty string to null
+    if (updatedBudget.startDate !== undefined) {
+      updateData.start_date = (updatedBudget.startDate && updatedBudget.startDate.trim() !== '') 
+        ? updatedBudget.startDate 
+        : null;
+    }
+    if (updatedBudget.start_date !== undefined) {
+      updateData.start_date = (updatedBudget.start_date && updatedBudget.start_date.trim() !== '') 
+        ? updatedBudget.start_date 
+        : null;
+    }
+    
+    // Handle expirationDate: convert empty string to null
+    if (updatedBudget.expirationDate !== undefined) {
+      updateData.expiration_date = (updatedBudget.expirationDate && updatedBudget.expirationDate.trim() !== '') 
+        ? updatedBudget.expirationDate 
+        : null;
+    }
+    if (updatedBudget.expiration_date !== undefined) {
+      updateData.expiration_date = (updatedBudget.expiration_date && updatedBudget.expiration_date.trim() !== '') 
+        ? updatedBudget.expiration_date 
+        : null;
+    }
+
+    console.log('🔄 updateBudget - Updating with data:', updateData);
 
     const { data, error } = await supabase
       .from('budgets')
@@ -395,9 +420,12 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
       .single();
 
     if (error) {
-      console.error('Error updating budget:', error);
+      console.error('❌ Error updating budget:', error);
+      console.error('Error details:', error.message, error.details, error.hint);
       return null;
     }
+
+    console.log('✅ updateBudget - Success:', data);
 
     return {
       id: data.id,
@@ -408,7 +436,8 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
       createdAt: data.created_at || null,
     };
   } catch (error) {
-    console.error('Error in updateBudget:', error);
+    console.error('❌ Error in updateBudget:', error);
+    console.error('Error stack:', error.stack);
     return null;
   }
 };
