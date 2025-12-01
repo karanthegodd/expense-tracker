@@ -216,20 +216,11 @@ const Homepage = () => {
           <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto">
             Join thousands of students taking control of their financial future
           </p>
-          {!authenticated && (
-            <Link to="/signup">
-              <Button variant="primary" className="text-lg px-12 py-4 bg-white text-[#002145] hover:bg-gray-100 shadow-2xl font-bold">
-                Get Started Free
-              </Button>
-            </Link>
-          )}
-          {authenticated && (
-            <Link to="/dashboard">
-              <Button variant="primary" className="text-lg px-12 py-4 bg-white text-[#002145] hover:bg-gray-100 shadow-2xl font-bold">
-                Go to Dashboard
-              </Button>
-            </Link>
-          )}
+          <Link to="/signup">
+            <Button variant="primary" className="text-lg px-12 py-4 bg-white text-[#002145] hover:bg-gray-100 shadow-2xl font-bold">
+              Sign Up
+            </Button>
+          </Link>
         </div>
       </div>
 
