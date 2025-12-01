@@ -495,16 +495,45 @@ const FinancialPlanning = () => {
   };
 
   const getSpentAmount = (category, budget = null) => {
-    if (!expenses || expenses.length === 0) return 0;
+    if (!expenses || expenses.length === 0) {
+      console.log(`⚠️ getSpentAmount(${category}): No expenses available`);
+      return 0;
+    }
+    
+    console.log(`🔍 getSpentAmount(${category}): Checking ${expenses.length} expenses`);
     
     let filteredExpenses = expenses.filter(exp => {
-      if (!exp || !exp.date) return false;
+      if (!exp || !exp.date) {
+        console.log(`⚠️ getSpentAmount(${category}): Expense missing date:`, exp);
+        return false;
+      }
       // Use parseLocalDate for consistent date parsing (matches Dashboard)
       const expDate = parseLocalDate(exp.date);
-      if (!expDate) return false;
+      if (!expDate) {
+        console.log(`⚠️ getSpentAmount(${category}): Could not parse date:`, exp.date);
+        return false;
+      }
       
       // Filter by category
-      if (exp.category !== category) return false;
+      if (exp.category !== category) {
+        // Debug category mismatches for Bills & Utilities
+        if (category === 'Bills & Utilities' && exp.category) {
+          console.log(`❌ getSpentAmount - Category mismatch:`, {
+            expenseCategory: exp.category,
+            budgetCategory: category,
+            match: exp.category === category,
+            expense: exp.name || exp.description
+          });
+        }
+        return false;
+      }
+      
+      console.log(`✅ getSpentAmount(${category}): Found matching category expense:`, {
+        name: exp.name || exp.description,
+        category: exp.category,
+        amount: exp.amount,
+        date: exp.date
+      });
       
       // Determine the start date: use startDate if set, otherwise use createdAt
       let startDate = null;
@@ -528,26 +557,69 @@ const FinancialPlanning = () => {
         const expirationDate = parseLocalDate(budget.expirationDate);
         if (expirationDate) {
           expirationDate.setHours(23, 59, 59, 999); // End of expiration day
-          // Use the earlier of: expiration date or current date
-          if (expirationDate < endDate) {
-            endDate = expirationDate;
-          }
+          // Use expiration date if it exists (whether past or future)
+          // If expiration is in the future, use it. If in the past, still use it (budget expired).
+          // Only if no expiration date, use current date (budget never expires)
+          endDate = expirationDate;
         }
       }
       
       // Only count expenses within the budget's active period
-      if (startDate && expDate < startDate) return false;
-      if (expDate > endDate) return false;
+      // Start date: expenses on or after start date are included
+      // End date: expenses on or before end date are included
+      if (startDate) {
+        const startDateNormalized = new Date(startDate);
+        startDateNormalized.setHours(0, 0, 0, 0); // Start of day
+        // Exclude expenses before start date (expenses on start date are included)
+        if (expDate < startDateNormalized) {
+          console.log(`❌ getSpentAmount(${category}) - Expense before startDate:`, {
+            expenseDate: exp.date,
+            parsedExpenseDate: expDate.toISOString().split('T')[0],
+            startDate: startDateNormalized.toISOString().split('T')[0],
+            expense: exp.name || exp.description
+          });
+          return false;
+        }
+      }
+      
+      // Normalize end date to end of day (23:59:59.999)
+      const endDateNormalized = new Date(endDate);
+      endDateNormalized.setHours(23, 59, 59, 999);
+      // Exclude expenses after end date (expenses on end date are included)
+      if (expDate > endDateNormalized) {
+        console.log(`❌ getSpentAmount(${category}) - Expense after endDate:`, {
+          expenseDate: exp.date,
+          parsedExpenseDate: expDate.toISOString().split('T')[0],
+          endDate: endDateNormalized.toISOString().split('T')[0],
+          expense: exp.name || exp.description
+        });
+        return false;
+      }
+      
+      console.log(`✅ getSpentAmount(${category}) - Expense within date range:`, {
+        date: exp.date,
+        parsedDate: expDate.toISOString().split('T')[0],
+        amount: exp.amount,
+        name: exp.name || exp.description,
+        startDate: startDate ? startDate.toISOString().split('T')[0] : 'null',
+        endDate: endDate.toISOString().split('T')[0]
+      });
       
       return true;
     });
+    
+    console.log(`📊 getSpentAmount(${category}): Filtered ${filteredExpenses.length} expenses within date range`);
     
     // Sum all expenses (negative amounts = refunds reduce the total)
     // This correctly subtracts refunds: 100 + (-50) = 50
     const total = filteredExpenses.reduce((sum, exp) => {
       const amount = parseFloat(exp.amount || 0);
-      return sum + amount; // Negative amounts (refunds) subtract from total
+      const result = sum + amount; // Negative amounts (refunds) subtract from total
+      console.log(`  Adding ${category} expense: ${exp.name || exp.description}, amount: ${amount}, running total: ${result}`);
+      return result;
     }, 0);
+    
+    console.log(`💰 getSpentAmount(${category}): Final total = ${total}`);
     return total;
   };
 

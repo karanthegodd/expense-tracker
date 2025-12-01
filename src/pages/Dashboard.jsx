@@ -329,7 +329,7 @@ const Dashboard = () => {
           startDate.setHours(0, 0, 0, 0); // Start of creation day
         }
         
-        // End date: expiration date if set and passed, otherwise use current date (never expires)
+        // End date: expiration date if set, otherwise use current date (never expires)
         // This must match FinancialPlanning.jsx getSpentAmount logic exactly
         let endDate = new Date();
         endDate.setHours(23, 59, 59, 999); // End of today
@@ -338,18 +338,37 @@ const Dashboard = () => {
           const expirationDate = parseLocalDate(budget.expirationDate);
           if (expirationDate) {
             expirationDate.setHours(23, 59, 59, 999); // End of expiration day
-            // Use the earlier of: expiration date or current date
-            if (expirationDate < endDate) {
-              endDate = expirationDate;
-            }
+            // Use expiration date if it exists (whether past or future)
+            // If expiration is in the future, use it. If in the past, still use it (budget expired).
+            // Only if no expiration date, use current date (budget never expires)
+            endDate = expirationDate;
           }
         }
         
         // Filter expenses by category first
         const categoryExpenses = allExpenses.filter(exp => {
           const matches = exp.category === budget.category;
-          if (budget.category === 'Shopping' && matches) {
-            console.log('✅ Found Shopping expense:', exp);
+          // Debug for ALL categories, not just Shopping
+          if (matches) {
+            console.log(`✅ Found ${budget.category} expense:`, {
+              name: exp.name || exp.description,
+              category: exp.category,
+              amount: exp.amount,
+              date: exp.date,
+              budgetCategory: budget.category,
+              match: exp.category === budget.category
+            });
+          }
+          // Also log mismatches for Bills & Utilities to debug
+          if (budget.category === 'Bills & Utilities' && !matches && exp.category) {
+            console.log(`❌ Bills & Utilities budget - expense category mismatch:`, {
+              expenseCategory: exp.category,
+              budgetCategory: budget.category,
+              expenseCategoryLength: exp.category?.length,
+              budgetCategoryLength: budget.category?.length,
+              exactMatch: exp.category === budget.category,
+              expense: exp
+            });
           }
           return matches;
         });
@@ -374,30 +393,46 @@ const Dashboard = () => {
               return false;
             }
             
-            // Only count expenses within the budget's active period (from creation to expiration/now)
+            // Only count expenses within the budget's active period
+            // Start date: expenses on or after start date are included
+            // End date: expenses on or before end date are included
             if (startDate) {
               const startDateNormalized = new Date(startDate);
-              startDateNormalized.setHours(0, 0, 0, 0);
+              startDateNormalized.setHours(0, 0, 0, 0); // Start of day
+              // Exclude expenses before start date (expenses on start date are included)
               if (expDate < startDateNormalized) {
-                if (budget.category === 'Shopping') {
-                  console.log('❌ Expense before startDate:', exp.date, 'startDate:', startDateNormalized.toISOString().split('T')[0]);
-                }
+                console.log(`❌ ${budget.category} - Expense before startDate:`, {
+                  expenseDate: exp.date,
+                  parsedExpenseDate: expDate.toISOString().split('T')[0],
+                  startDate: startDateNormalized.toISOString().split('T')[0],
+                  expense: exp.name || exp.description
+                });
                 return false;
               }
             }
             
+            // Normalize end date to end of day (23:59:59.999)
             const endDateNormalized = new Date(endDate);
             endDateNormalized.setHours(23, 59, 59, 999);
+            // Exclude expenses after end date (expenses on end date are included)
             if (expDate > endDateNormalized) {
-              if (budget.category === 'Shopping') {
-                console.log('❌ Expense after endDate:', exp.date, 'endDate:', endDateNormalized.toISOString().split('T')[0]);
-              }
+              console.log(`❌ ${budget.category} - Expense after endDate:`, {
+                expenseDate: exp.date,
+                parsedExpenseDate: expDate.toISOString().split('T')[0],
+                endDate: endDateNormalized.toISOString().split('T')[0],
+                expense: exp.name || exp.description
+              });
               return false;
             }
             
-            if (budget.category === 'Shopping') {
-              console.log('✅ Counting expense:', exp.date, 'amount:', exp.amount, 'name:', exp.name || exp.description);
-            }
+            console.log(`✅ ${budget.category} - Counting expense:`, {
+              date: exp.date,
+              parsedDate: expDate.toISOString().split('T')[0],
+              amount: exp.amount,
+              name: exp.name || exp.description,
+              startDate: startDate ? startDate.toISOString().split('T')[0] : 'null',
+              endDate: endDate.toISOString().split('T')[0]
+            });
             return true;
           })
           .reduce((sum, exp) => {
