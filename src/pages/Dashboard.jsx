@@ -200,14 +200,13 @@ const Dashboard = () => {
         })
           .reduce((sum, exp) => {
             const amount = parseFloat(exp.amount || 0);
-            // For chart display, use absolute value to show total spending
-            // Refunds (negative) reduce the cumulative total
-            return sum + Math.abs(amount);
+            // Use actual amount - refunds (negative) reduce the cumulative total
+            return sum + amount;
           }, 0);
       
       // Add to cumulative totals
       cumulativeIncome += dayIncome;
-      cumulativeExpenses += dayExpense;
+      cumulativeExpenses += dayExpense; // This can go down if refunds exceed expenses
       
       dailyData.push({
         day: day,
@@ -240,10 +239,14 @@ const Dashboard = () => {
       categoryBreakdown[category] = (categoryBreakdown[category] || 0) + parseFloat(exp.amount || 0);
     });
     
-    return Object.entries(categoryBreakdown).map(([category, amount]) => ({
-    category,
-    amount: parseFloat(amount.toFixed(2)),
-  }));
+    // Filter out categories with zero or negative net spending for pie chart
+    // (refunds can make categories negative, which doesn't make sense for a pie chart)
+    return Object.entries(categoryBreakdown)
+      .filter(([category, amount]) => amount > 0) // Only show positive spending
+      .map(([category, amount]) => ({
+        category,
+        amount: parseFloat(amount.toFixed(2)),
+      }));
   };
 
   const categoryData = getCategoryData();
