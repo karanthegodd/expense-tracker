@@ -218,11 +218,14 @@ const Dashboard = () => {
       .map(budget => {
         // Calculate cumulative spending from budget creation to expiration (or current date)
         // Budgets always show cumulative spending, not filtered by selected month
-        // If createdAt is not available, use a very old date as fallback (count all expenses)
-        let startDate = new Date('2000-01-01'); // Default to very old date if createdAt missing
+        let startDate = null;
         if (budget.createdAt) {
           startDate = new Date(budget.createdAt);
           startDate.setHours(0, 0, 0, 0);
+        } else {
+          // If createdAt is missing, we can't determine when budget started
+          // In this case, count all expenses (fallback for old budgets)
+          console.warn('Budget missing createdAt:', budget);
         }
         
         // End date: expiration date if set and passed, otherwise use current date
@@ -239,21 +242,35 @@ const Dashboard = () => {
         }
         
         // Filter expenses by category and budget active period (cumulative from creation to expiration/now)
-        const spent = allExpenses
+        const categoryExpenses = allExpenses.filter(exp => exp.category === budget.category);
+        const spent = categoryExpenses
           .filter(exp => {
             if (!exp.date) return false;
-            if (exp.category !== budget.category) return false;
             
             const expDate = new Date(exp.date);
             expDate.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
             
             // Only count expenses within the budget's active period (from creation to expiration/now)
-            if (expDate < startDate) return false;
+            if (startDate && expDate < startDate) return false;
             if (expDate > endDate) return false;
             
             return true;
           })
           .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        
+        // Debug logging
+        if (budget.category === 'Shopping') {
+          console.log('Budget Debug - Shopping:', {
+            category: budget.category,
+            createdAt: budget.createdAt,
+            startDate: startDate,
+            expirationDate: budget.expirationDate,
+            endDate: endDate,
+            totalCategoryExpenses: categoryExpenses.length,
+            spent: spent,
+            budgetAmount: budget.amount
+          });
+        }
         
         const percentage = (spent / parseFloat(budget.amount || 1)) * 100;
         
