@@ -27,32 +27,32 @@ const Login = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-16 flex justify-center items-center min-h-[calc(100vh-200px)]">
+    <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[calc(100vh-120px)]">
       <Card className="w-full max-w-md slide-up">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-orange to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <h2 className="text-4xl font-bold text-white mb-2">
+          <h2 className="text-3xl font-bold text-white mb-1">
             Welcome Back
           </h2>
-          <p className="text-white/80">Sign in to continue to your dashboard</p>
+          <p className="text-white/70 text-sm">Sign in to continue to your dashboard</p>
         </div>
         
         {error && (
-          <div className="bg-red-500/20 backdrop-blur-sm border-2 border-red-400/50 text-red-200 px-4 py-3 rounded-xl mb-6 flex items-center space-x-3 animate-slide-in-right shadow-lg">
-            <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <div className="bg-red-500/20 backdrop-blur-sm border-2 border-red-400/50 text-red-200 px-4 py-2.5 rounded-xl mb-4 flex items-center space-x-2 animate-slide-in-right shadow-lg">
+            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
-            <span className="flex-1 font-medium">{error}</span>
+            <span className="flex-1 font-medium text-sm">{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-              <label className="block text-white/90 font-semibold mb-2 text-sm">
+              <label className="block text-white/90 font-semibold mb-1.5 text-sm">
                 Email Address
               </label>
               <div className="relative">
@@ -73,7 +73,7 @@ const Login = () => {
             </div>
 
             <div>
-              <label className="block text-white/90 font-semibold mb-2 text-sm">
+              <label className="block text-white/90 font-semibold mb-1.5 text-sm">
                 Password
               </label>
               <div className="relative">
@@ -96,12 +96,12 @@ const Login = () => {
           <Button
             type="submit"
             variant="primary"
-            className="w-full py-3 text-lg"
+            className="w-full py-2.5 text-base font-semibold"
             disabled={loading}
           >
             {loading ? (
               <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -113,7 +113,7 @@ const Login = () => {
           </Button>
         </form>
 
-        <p className="mt-8 text-center text-white/80">
+        <p className="mt-6 text-center text-white/70 text-sm">
            Don't have an account?{' '}
           <Link to="/signup" className="text-orange-300 font-semibold hover:text-orange-200 transition-colors">
             Sign up here
