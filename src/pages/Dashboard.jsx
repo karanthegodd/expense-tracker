@@ -291,18 +291,40 @@ const Dashboard = () => {
     console.log('🔍 getBudgetProgressData - All budgets:', budgets);
     console.log('🔍 getBudgetProgressData - All expenses count:', allExpenses.length);
     
+    // Calculate the end of the selected month
+    const selectedMonthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+    
     return budgets
       .filter(budget => {
         // Only show budgets that were active during the selected month
-        if (!budget.expirationDate) return true; // Never expires, always show
+        // Check start date: budget must have started by the end of selected month
+        let budgetStart = null;
+        if (budget.startDate) {
+          budgetStart = parseLocalDate(budget.startDate);
+          if (budgetStart) {
+            budgetStart.setHours(0, 0, 0, 0);
+            // Budget hasn't started yet
+            if (budgetStart > selectedMonthEnd) return false;
+          }
+        } else if (budget.createdAt) {
+          budgetStart = new Date(budget.createdAt);
+          budgetStart.setHours(0, 0, 0, 0);
+          // Budget hasn't started yet
+          if (budgetStart > selectedMonthEnd) return false;
+        }
         
-        const expirationDate = parseLocalDate(budget.expirationDate);
-        if (!expirationDate) return true; // If can't parse, show it
-        expirationDate.setHours(23, 59, 59, 999);
+        // Check expiration date: budget must not have expired before the start of selected month
+        if (budget.expirationDate) {
+          const expirationDate = parseLocalDate(budget.expirationDate);
+          if (expirationDate) {
+            expirationDate.setHours(23, 59, 59, 999);
+            // Budget expired before selected month started
+            if (expirationDate < selectedDate) return false;
+          }
+        }
         
-        // Show if budget was active during selected month
-        // Budget is active if expiration date is on or after the start of selected month
-        return expirationDate >= selectedDate;
+        // Budget is active during selected month
+        return true;
       })
       .map(budget => {
         // Calculate cumulative spending from budget start date to expiration (or current date)
