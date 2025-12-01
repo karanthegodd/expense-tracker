@@ -386,12 +386,12 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
     if (updatedBudget.amount !== undefined) updateData.amount = parseFloat(updatedBudget.amount);
     
     // Handle startDate: convert empty string to null
+    // Only include start_date if it's provided (skip if column doesn't exist in DB)
     if (updatedBudget.startDate !== undefined) {
       updateData.start_date = (updatedBudget.startDate && updatedBudget.startDate.trim() !== '') 
         ? updatedBudget.startDate 
         : null;
-    }
-    if (updatedBudget.start_date !== undefined) {
+    } else if (updatedBudget.start_date !== undefined) {
       updateData.start_date = (updatedBudget.start_date && updatedBudget.start_date.trim() !== '') 
         ? updatedBudget.start_date 
         : null;
@@ -402,8 +402,7 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
       updateData.expiration_date = (updatedBudget.expirationDate && updatedBudget.expirationDate.trim() !== '') 
         ? updatedBudget.expirationDate 
         : null;
-    }
-    if (updatedBudget.expiration_date !== undefined) {
+    } else if (updatedBudget.expiration_date !== undefined) {
       updateData.expiration_date = (updatedBudget.expiration_date && updatedBudget.expiration_date.trim() !== '') 
         ? updatedBudget.expiration_date 
         : null;
@@ -451,6 +450,37 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
       console.error('Error message:', error.message);
       console.error('Error details:', error.details);
       console.error('Error hint:', error.hint);
+      
+      // If error is about missing start_date column, try again without it
+      if (error.message && error.message.includes('start_date')) {
+        console.warn('⚠️ start_date column not found, retrying without it...');
+        delete updateData.start_date;
+        
+        // Retry the update without start_date
+        const { data: retryData, error: retryError } = await supabase
+          .from('budgets')
+          .update(updateData)
+          .eq('id', id)
+          .eq('user_id', userId)
+          .select()
+          .single();
+        
+        if (retryError) {
+          console.error('❌ Retry also failed:', retryError);
+          throw new Error(`Database error: ${retryError.message}. Please add the start_date column to your budgets table.`);
+        }
+        
+        console.log('✅ updateBudget - Success (without start_date):', retryData);
+        return {
+          id: retryData.id,
+          category: retryData.category || '',
+          amount: parseFloat(retryData.amount),
+          startDate: retryData.start_date || null,
+          expirationDate: retryData.expiration_date || null,
+          createdAt: retryData.created_at || null,
+        };
+      }
+      
       // Throw error so it can be caught and displayed
       throw new Error(error.message || 'Failed to update budget');
     }
