@@ -10,6 +10,22 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar 
 } from 'recharts';
 
+// Helper to parse date strings in local timezone (not UTC)
+// When you do new Date("2025-12-01"), it treats it as UTC, which can be previous day in local time
+const parseLocalDate = (dateString) => {
+  if (!dateString) return null;
+  if (dateString instanceof Date) return dateString;
+  // Parse YYYY-MM-DD format in local timezone
+  const parts = dateString.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+    const day = parseInt(parts[2], 10);
+    return new Date(year, month, day);
+  }
+  return new Date(dateString);
+};
+
 const Dashboard = () => {
   const [data, setData] = useState({
     totalIncome: 0,
@@ -130,12 +146,14 @@ const Dashboard = () => {
     // Filter incomes and expenses for selected month
     const monthlyIncomes = (data.allIncomes || []).filter(inc => {
       if (!inc.date) return false;
-      const incDate = new Date(inc.date);
+      const incDate = parseLocalDate(inc.date);
+      if (!incDate) return false;
       return incDate.getMonth() === month - 1 && incDate.getFullYear() === year;
     });
     const monthlyExpenses = (data.allExpenses || []).filter(exp => {
       if (!exp.date) return false;
-      const expDate = new Date(exp.date);
+      const expDate = parseLocalDate(exp.date);
+      if (!expDate) return false;
       return expDate.getMonth() === month - 1 && expDate.getFullYear() === year;
     });
     
@@ -143,15 +161,30 @@ const Dashboard = () => {
     let cumulativeExpenses = 0;
     
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month - 1, day);
-      const dateStr = date.toISOString().split('T')[0];
+      // Generate date string in local timezone format
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       
+      // Match by comparing parsed dates (handles timezone correctly)
       const dayIncome = monthlyIncomes
-        .filter(inc => inc.date === dateStr)
+        .filter(inc => {
+          if (!inc.date) return false;
+          const incDate = parseLocalDate(inc.date);
+          if (!incDate) return false;
+          return incDate.getDate() === day && 
+                 incDate.getMonth() === month - 1 && 
+                 incDate.getFullYear() === year;
+        })
         .reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
       
       const dayExpense = monthlyExpenses
-        .filter(exp => exp.date === dateStr)
+        .filter(exp => {
+          if (!exp.date) return false;
+          const expDate = parseLocalDate(exp.date);
+          if (!expDate) return false;
+          return expDate.getDate() === day && 
+                 expDate.getMonth() === month - 1 && 
+                 expDate.getFullYear() === year;
+        })
         .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
       
       // Add to cumulative totals
@@ -176,7 +209,8 @@ const Dashboard = () => {
     const [year, month] = selectedMonth.split('-').map(Number);
     const monthlyExpenses = (data.allExpenses || []).filter(exp => {
       if (!exp.date) return false;
-      const expDate = new Date(exp.date);
+      const expDate = parseLocalDate(exp.date);
+      if (!expDate) return false;
       return expDate.getMonth() === month - 1 && expDate.getFullYear() === year;
     });
     
@@ -211,7 +245,8 @@ const Dashboard = () => {
         // Only show budgets that were active during the selected month
         if (!budget.expirationDate) return true; // Never expires, always show
         
-        const expirationDate = new Date(budget.expirationDate);
+        const expirationDate = parseLocalDate(budget.expirationDate);
+        if (!expirationDate) return true; // If can't parse, show it
         expirationDate.setHours(23, 59, 59, 999);
         
         // Show if budget was active during selected month
@@ -224,8 +259,8 @@ const Dashboard = () => {
         // Start date: use startDate if set, otherwise use createdAt
         let startDate = null;
         if (budget.startDate) {
-          startDate = new Date(budget.startDate);
-          startDate.setHours(0, 0, 0, 0);
+          startDate = parseLocalDate(budget.startDate);
+          if (startDate) startDate.setHours(0, 0, 0, 0);
         } else if (budget.createdAt) {
           startDate = new Date(budget.createdAt);
           startDate.setHours(0, 0, 0, 0);
@@ -236,11 +271,13 @@ const Dashboard = () => {
         endDate.setHours(23, 59, 59, 999); // End of today
         
         if (budget.expirationDate) {
-          const expirationDate = new Date(budget.expirationDate);
-          expirationDate.setHours(23, 59, 59, 999);
-          // Use the earlier of: expiration date or current date
-          if (expirationDate < endDate) {
-            endDate = expirationDate;
+          const expirationDate = parseLocalDate(budget.expirationDate);
+          if (expirationDate) {
+            expirationDate.setHours(23, 59, 59, 999);
+            // Use the earlier of: expiration date or current date
+            if (expirationDate < endDate) {
+              endDate = expirationDate;
+            }
           }
         }
         
@@ -263,7 +300,8 @@ const Dashboard = () => {
               return false;
             }
             
-            const expDate = new Date(exp.date);
+            const expDate = parseLocalDate(exp.date);
+            if (!expDate) return false;
             expDate.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
             
             // Only count expenses within the budget's active period (from creation to expiration/now)
@@ -447,14 +485,16 @@ const Dashboard = () => {
         // Get all incomes and expenses up to and including the selected month
         const incomesUpToMonth = (data.allIncomes || []).filter(inc => {
           if (!inc.date) return false;
-          const incDate = new Date(inc.date);
+          const incDate = parseLocalDate(inc.date);
+          if (!incDate) return false;
           const incMonth = new Date(incDate.getFullYear(), incDate.getMonth(), 1);
           return incMonth <= selectedDate;
         });
         
         const expensesUpToMonth = (data.allExpenses || []).filter(exp => {
           if (!exp.date) return false;
-          const expDate = new Date(exp.date);
+          const expDate = parseLocalDate(exp.date);
+          if (!expDate) return false;
           const expMonth = new Date(expDate.getFullYear(), expDate.getMonth(), 1);
           return expMonth <= selectedDate;
         });
@@ -467,12 +507,14 @@ const Dashboard = () => {
         // Get just the selected month's data
         const monthlyIncomes = (data.allIncomes || []).filter(inc => {
           if (!inc.date) return false;
-          const incDate = new Date(inc.date);
+          const incDate = parseLocalDate(inc.date);
+          if (!incDate) return false;
           return incDate.getMonth() === month - 1 && incDate.getFullYear() === year;
         });
         const monthlyExpenses = (data.allExpenses || []).filter(exp => {
           if (!exp.date) return false;
-          const expDate = new Date(exp.date);
+          const expDate = parseLocalDate(exp.date);
+          if (!expDate) return false;
           return expDate.getMonth() === month - 1 && expDate.getFullYear() === year;
         });
         const monthIncome = monthlyIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
@@ -483,13 +525,15 @@ const Dashboard = () => {
         const previousMonth = new Date(year, month - 2, 1);
         const previousIncomes = (data.allIncomes || []).filter(inc => {
           if (!inc.date) return false;
-          const incDate = new Date(inc.date);
+          const incDate = parseLocalDate(inc.date);
+          if (!incDate) return false;
           const incMonth = new Date(incDate.getFullYear(), incDate.getMonth(), 1);
           return incMonth < selectedDate;
         });
         const previousExpenses = (data.allExpenses || []).filter(exp => {
           if (!exp.date) return false;
-          const expDate = new Date(exp.date);
+          const expDate = parseLocalDate(exp.date);
+          if (!expDate) return false;
           const expMonth = new Date(expDate.getFullYear(), expDate.getMonth(), 1);
           return expMonth < selectedDate;
         });

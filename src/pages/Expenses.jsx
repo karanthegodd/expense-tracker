@@ -24,6 +24,29 @@ const Expenses = () => {
     return `${year}-${month}-${day}`;
   };
 
+  // Helper to normalize date string to YYYY-MM-DD in local timezone
+  // Prevents timezone issues when dates are parsed
+  const normalizeDateString = (dateString) => {
+    if (!dateString) return getTodayDate();
+    // If already in YYYY-MM-DD format, return as-is
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    // Parse in local timezone and convert back to string
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const date = new Date(year, month, day);
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    return getTodayDate();
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
@@ -105,7 +128,7 @@ const Expenses = () => {
       name: expense.name,
       amount: expense.amount,
       category: expense.category,
-      date: expense.date,
+      date: normalizeDateString(expense.date),
     });
     setEditingId(expense.id);
     setShowForm(true);
