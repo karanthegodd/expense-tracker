@@ -843,7 +843,7 @@ const Dashboard = () => {
                     </span>
                   </div>
                 </div>
-                <div className="w-full bg-white/10 rounded-full h-4 overflow-hidden relative">
+                <div className="w-full bg-white/10 rounded-full h-4 overflow-visible relative">
                   {item.spent < 0 ? (
                     // If refunds exceed expenses, show green bar at 0%
                     <div
@@ -865,19 +865,10 @@ const Dashboard = () => {
                       ></div>
                       {item.percentage > 100 && (
                         <div 
-                          className="absolute top-0 left-0 h-4 rounded-full bg-red-500 transition-all duration-500"
-                          style={{ 
-                            width: `${Math.min(item.percentage, 100)}%`,
-                            boxShadow: `0 0 10px rgba(255, 59, 48, 0.5)`
-                          }}
-                        ></div>
-                      )}
-                      {item.percentage > 100 && (
-                        <div 
                           className="absolute top-0 h-4 bg-red-600 rounded-r-full"
                           style={{ 
                             left: '100%',
-                            width: `${Math.min(item.percentage - 100, 20)}%`,
+                            width: `${Math.min((item.percentage - 100) * 0.2, 20)}%`,
                             maxWidth: '20%'
                           }}
                         ></div>
