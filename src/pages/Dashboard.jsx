@@ -5,27 +5,11 @@ import ChartContainer from '../components/ChartContainer';
 import Button from '../components/Button';
 import { isAuthenticated } from '../utils/auth';
 import { manualRefreshSession } from '../utils/sessionKeepAlive';
-import { formatDateEST } from '../utils/dateUtils';
+import { formatDateEST, parseLocalDate, getTodayDateEST } from '../utils/dateUtils';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar 
 } from 'recharts';
-
-// Helper to parse date strings in local timezone (not UTC)
-// When you do new Date("2025-12-01"), it treats it as UTC, which can be previous day in local time
-const parseLocalDate = (dateString) => {
-  if (!dateString) return null;
-  if (dateString instanceof Date) return dateString;
-  // Parse YYYY-MM-DD format in local timezone
-  const parts = dateString.split('-');
-  if (parts.length === 3) {
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
-    const day = parseInt(parts[2], 10);
-    return new Date(year, month, day);
-  }
-  return new Date(dateString);
-};
 
 const Dashboard = () => {
   const [data, setData] = useState({

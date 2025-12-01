@@ -85,3 +85,22 @@ export const normalizeDateStringEST = (dateString) => {
   return `${year}-${month}-${day}`;
 };
 
+/**
+ * Parse date string in local timezone (not UTC)
+ * When you do new Date("2025-12-01"), it treats it as UTC, which can be previous day in local time
+ * This function parses YYYY-MM-DD format in local timezone
+ */
+export const parseLocalDate = (dateString) => {
+  if (!dateString) return null;
+  if (dateString instanceof Date) return dateString;
+  // Parse YYYY-MM-DD format in local timezone
+  const parts = dateString.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+    const day = parseInt(parts[2], 10);
+    return new Date(year, month, day);
+  }
+  return new Date(dateString);
+};
+
