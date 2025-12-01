@@ -121,12 +121,30 @@ const Dashboard = () => {
     // Small delay to ensure auth is ready
     const timeout = setTimeout(initializeData, 500);
     
-    // Refresh every 30 seconds
-    const interval = setInterval(loadData, 30000);
+    // Refresh every 10 seconds to catch expense/budget changes
+    const interval = setInterval(loadData, 10000);
+    
+    // Reload data when page becomes visible (user switches back to tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('📊 Dashboard visible - reloading data');
+        loadData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Reload data when window gains focus
+    const handleFocus = () => {
+      console.log('📊 Dashboard focused - reloading data');
+      loadData();
+    };
+    window.addEventListener('focus', handleFocus);
     
     return () => {
       clearTimeout(timeout);
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
     };
   }, []);
 
