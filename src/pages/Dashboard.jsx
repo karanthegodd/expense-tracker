@@ -373,7 +373,8 @@ const Dashboard = () => {
       const percentage = (spent / parseFloat(budget.amount || 1)) * 100;
       
       let color = '#4CAF50'; // Green
-      if (percentage > 90) color = '#FF3B30'; // Red
+      if (percentage > 100) color = '#FF3B30'; // Red - over budget
+      else if (percentage > 90) color = '#FF3B30'; // Red
       else if (percentage > 50) color = '#FFB300'; // Orange
       
       return {
@@ -381,7 +382,7 @@ const Dashboard = () => {
         budget: parseFloat(budget.amount),
         spent: spent,
         remaining: parseFloat(budget.amount) - spent,
-        percentage: Math.min(percentage, 100),
+        percentage: percentage, // Don't cap at 100% - show over budget
         color,
       };
     });
@@ -645,79 +646,46 @@ const Dashboard = () => {
           })()}`} 
           icon="📈"
         >
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={dailyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <defs>
-                <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00AEEF" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#00AEEF" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#FF6A00" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#FF6A00" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={dailyData} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis 
                 dataKey="day" 
-                stroke="rgba(255,255,255,0.5)"
-                tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
-                tickLine={{ stroke: 'rgba(255,255,255,0.3)' }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.3)' }}
+                stroke="rgba(255,255,255,0.7)"
+                tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 11 }}
               />
               <YAxis 
-                stroke="rgba(255,255,255,0.5)"
-                tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
-                tickLine={{ stroke: 'rgba(255,255,255,0.3)' }}
-                axisLine={{ stroke: 'rgba(255,255,255,0.3)' }}
-                tickFormatter={(value) => `$${value.toLocaleString()}`}
+                stroke="rgba(255,255,255,0.7)"
+                tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 11 }}
               />
               <Tooltip 
                 formatter={(value) => formatCurrency(value)}
                 contentStyle={{ 
-                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: '12px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
                   color: 'white',
-                  padding: '12px 16px',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
-                }}
-                labelStyle={{ 
-                  color: 'rgba(255,255,255,0.9)',
-                  marginBottom: '8px',
-                  fontWeight: '600'
-                }}
-                itemStyle={{ 
-                  color: 'white',
-                  padding: '4px 0'
+                  padding: '10px 14px'
                 }}
               />
               <Legend 
-                wrapperStyle={{ color: 'white', paddingTop: '20px' }}
-                iconType="line"
-                formatter={(value) => <span style={{ color: 'white', fontSize: '14px' }}>{value}</span>}
+                wrapperStyle={{ color: 'white' }}
               />
               <Line 
                 type="monotone" 
                 dataKey="income" 
                 stroke="#00AEEF" 
-                strokeWidth={4}
-                dot={{ fill: '#00AEEF', r: 5, strokeWidth: 2, stroke: '#fff' }}
-                activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }}
+                strokeWidth={2.5}
+                dot={{ fill: '#00AEEF', r: 3 }}
                 name="Income"
-                animationDuration={1000}
-                animationEasing="ease-out"
               />
               <Line 
                 type="monotone" 
                 dataKey="expenses" 
                 stroke="#FF6A00" 
-                strokeWidth={4}
-                dot={{ fill: '#FF6A00', r: 5, strokeWidth: 2, stroke: '#fff' }}
-                activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }}
+                strokeWidth={2.5}
+                dot={{ fill: '#FF6A00', r: 3 }}
                 name="Expenses"
-                animationDuration={1000}
-                animationEasing="ease-out"
               />
             </LineChart>
           </ResponsiveContainer>
@@ -725,32 +693,25 @@ const Dashboard = () => {
 
         <ChartContainer title="Expense by Category" icon="🥧">
           {categoryData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
                   data={categoryData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                  outerRadius={120}
-                  innerRadius={60}
+                  label={false}
+                  outerRadius={100}
                   fill="#8884d8"
                   dataKey="amount"
                   animationBegin={0}
-                  animationDuration={1000}
-                  paddingAngle={2}
+                  animationDuration={800}
                 >
                   {categoryData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
                       fill={pieColors[index % pieColors.length]}
-                      style={{ 
-                        filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
-                        transition: 'all 0.3s ease'
-                      }}
-                      stroke="rgba(255,255,255,0.1)"
-                      strokeWidth={2}
+                      style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
                     />
                   ))}
                 </Pie>
@@ -825,17 +786,27 @@ const Dashboard = () => {
                     </span>
                   </div>
                 </div>
-                <div className="w-full bg-white/10 rounded-full h-4 overflow-hidden">
+                <div className="w-full bg-white/10 rounded-full h-4 overflow-hidden relative">
                   <div
                     className="h-4 rounded-full transition-all duration-500"
                     style={{ 
-                      width: `${item.percentage}%`,
+                      width: `${Math.min(item.percentage, 100)}%`,
                       backgroundColor: item.color,
                       boxShadow: `0 0 10px ${item.color}50`
                     }}
                   ></div>
+                  {item.percentage > 100 && (
+                    <div className="absolute top-0 right-0 h-4 w-2 bg-red-500 rounded-r-full"></div>
+                  )}
                 </div>
-                <p className="text-xs text-white/60 mt-1">{item.percentage.toFixed(1)}% used</p>
+                <p className="text-xs text-white/60 mt-1">
+                  {item.percentage.toFixed(1)}% used
+                  {item.percentage > 100 && (
+                    <span className="text-red-300 ml-2 font-semibold">
+                      (Over by {formatCurrency(item.spent - item.budget)})
+                    </span>
+                  )}
+                </p>
               </div>
             ))}
           </div>
