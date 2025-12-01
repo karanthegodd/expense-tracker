@@ -836,7 +836,10 @@ export const deleteRecurringPayment = async (id, email = null) => {
 export const getTotals = async (email = null) => {
   try {
     const userId = await getCurrentUserId();
+    console.log('getTotals - userId:', userId);
+    
     if (!userId) {
+      console.warn('⚠️ getTotals: No userId found. User may not be authenticated.');
       return {
     totalIncome: 0,
     totalExpenses: 0,
@@ -852,12 +855,22 @@ export const getTotals = async (email = null) => {
     totalUpcoming: 0,
   };
     }
+    
+    console.log('getTotals - Fetching data for userId:', userId);
 
     const incomes = await getIncomes();
     const expenses = await getExpenses();
     const budgets = await getBudgets();
     const savingsGoals = await getSavingsGoals();
     const upcomingExpenses = await getUpcomingExpenses();
+    
+    console.log('getTotals - Data fetched:', {
+      incomesCount: incomes.length,
+      expensesCount: expenses.length,
+      budgetsCount: budgets.length,
+      savingsGoalsCount: savingsGoals.length,
+      upcomingExpensesCount: upcomingExpenses.length
+    });
   
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();

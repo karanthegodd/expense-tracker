@@ -36,27 +36,52 @@ supabase.auth.onAuthStateChange((event, session) => {
 // Helper to get current user ID with automatic session refresh
 export const getCurrentUserId = async () => {
   try {
+    console.log('🔍 getCurrentUserId: Checking session...');
+    
     // First try to get the session (this will auto-refresh if needed)
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     
     if (sessionError) {
-      console.error('Error getting session:', sessionError)
+      console.error('❌ Error getting session:', sessionError)
       return null
     }
     
+    console.log('getCurrentUserId: Session exists?', !!session);
+    
     // If we have a session, get the user
     if (session) {
+      console.log('getCurrentUserId: Session found, getting user...');
       const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
       if (userError) {
-        console.error('Error getting user:', userError)
+        console.error('❌ Error getting user:', userError)
+        // Try to refresh the session if there's an error
+        console.log('Attempting to refresh session...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.error('❌ Error refreshing session:', refreshError);
+          return null;
+        }
+        if (refreshData?.session?.user) {
+          console.log('✅ Session refreshed, user ID:', refreshData.session.user.id);
+          return refreshData.session.user.id;
+        }
         return null
       }
-      return user?.id || null
+      
+      if (user?.id) {
+        console.log('✅ getCurrentUserId: User ID found:', user.id);
+        return user.id;
+      }
+      
+      console.warn('⚠️ getCurrentUserId: Session exists but no user ID');
+      return null;
     }
     
+    console.warn('⚠️ getCurrentUserId: No session found');
     return null
   } catch (error) {
-    console.error('Error in getCurrentUserId:', error)
+    console.error('❌ Error in getCurrentUserId:', error)
     return null
   }
 }

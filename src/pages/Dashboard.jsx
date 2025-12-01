@@ -27,23 +27,35 @@ const Dashboard = () => {
 
   const loadData = async () => {
     try {
+      console.log('🔄 Dashboard: Loading data...');
+      
       // Check if user is authenticated first
       const authenticated = await isAuthenticated();
+      console.log('Dashboard: Authenticated?', authenticated);
+      
       if (!authenticated) {
+        console.warn('⚠️ Dashboard: User not authenticated');
         setSessionExpired(true);
         return;
       }
       
       setSessionExpired(false);
+      console.log('Dashboard: Fetching totals...');
       const totals = await getTotals();
+      console.log('Dashboard: Totals received:', totals);
       setData(totals);
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error('❌ Error loading dashboard data:', error);
+      console.error('Error stack:', error.stack);
+      
       // Check if error is due to authentication
       const authenticated = await isAuthenticated();
+      console.log('Dashboard: After error, authenticated?', authenticated);
+      
       if (!authenticated) {
         setSessionExpired(true);
       }
+      
       // Set default empty data on error
       setData({
         totalIncome: 0,
