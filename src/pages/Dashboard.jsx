@@ -160,6 +160,10 @@ const Dashboard = () => {
     let cumulativeIncome = 0;
     let cumulativeExpenses = 0;
     
+    // Debug: Log filtered data
+    console.log('📊 Chart Debug - Monthly Incomes:', monthlyIncomes.length, monthlyIncomes);
+    console.log('📊 Chart Debug - Monthly Expenses:', monthlyExpenses.length, monthlyExpenses);
+    
     for (let day = 1; day <= daysInMonth; day++) {
       // Generate date string in local timezone format
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -170,9 +174,13 @@ const Dashboard = () => {
           if (!inc.date) return false;
           const incDate = parseLocalDate(inc.date);
           if (!incDate) return false;
-          return incDate.getDate() === day && 
+          const matches = incDate.getDate() === day && 
                  incDate.getMonth() === month - 1 && 
                  incDate.getFullYear() === year;
+          if (matches && day <= 3) {
+            console.log(`✅ Income match day ${day}:`, inc.date, inc.amount);
+          }
+          return matches;
         })
         .reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
       
@@ -181,11 +189,20 @@ const Dashboard = () => {
           if (!exp.date) return false;
           const expDate = parseLocalDate(exp.date);
           if (!expDate) return false;
-          return expDate.getDate() === day && 
+          const matches = expDate.getDate() === day && 
                  expDate.getMonth() === month - 1 && 
                  expDate.getFullYear() === year;
+          if (matches) {
+            console.log(`✅ Expense match day ${day}:`, exp.date, exp.amount, exp.name);
+          }
+          return matches;
         })
-        .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        .reduce((sum, exp) => {
+          const amount = parseFloat(exp.amount || 0);
+          // For chart display, we want cumulative total expenses (positive amounts)
+          // Negative amounts (refunds) reduce the total, but we show absolute value
+          return sum + Math.abs(amount);
+        }, 0);
       
       // Add to cumulative totals
       cumulativeIncome += dayIncome;
@@ -195,9 +212,11 @@ const Dashboard = () => {
         day: day,
         date: dateStr,
         income: cumulativeIncome,
-        expenses: cumulativeExpenses,
+        expenses: cumulativeExpenses, // Already using absolute values above
       });
     }
+    
+    console.log('📊 Chart Debug - Final dailyData:', dailyData);
     
     return dailyData;
   };
