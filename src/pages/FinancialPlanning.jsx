@@ -9,7 +9,7 @@ import Modal from '../components/Modal';
 import { useToast } from '../components/ToastContainer';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
 import { isAuthenticated } from '../utils/auth';
-import { formatDateEST, parseLocalDate } from '../utils/dateUtils';
+import { formatDateEST, parseLocalDate, normalizeDateStringEST } from '../utils/dateUtils';
 
 const FinancialPlanning = () => {
   const { showToast } = useToast();
@@ -214,12 +214,13 @@ const FinancialPlanning = () => {
           resetBudgetForm();
           // Refresh expenses to recalculate spent amounts
           const expensesData = await getExpenses();
-          setExpenses(expensesData || []);
           // Force refresh budgets - wait a bit to ensure DB is updated
-          await new Promise(resolve => setTimeout(resolve, 200));
-          await loadBudgets();
+          await new Promise(resolve => setTimeout(resolve, 300));
+          const refreshedBudgets = await getBudgets();
+          console.log('📊 Fresh budgets from DB:', refreshedBudgets);
+          setBudgets(refreshedBudgets || []);
           setExpenses(expensesData || []);
-          console.log('✅ Budgets refreshed after add');
+          console.log('✅ Budgets state updated, count:', (refreshedBudgets || []).length);
         } else {
           console.error('❌ addBudget returned null - check console for errors');
           showToast('Failed to add budget. Check console for details.', 'error');
