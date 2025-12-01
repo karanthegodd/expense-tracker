@@ -439,18 +439,32 @@ const Comparison = () => {
             <ChartContainer title="Category Comparison" icon="🥧">
               {comparisonData.categoryComparison.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={comparisonData.categoryComparison} layout="vertical">
+                  <BarChart 
+                    data={comparisonData.categoryComparison} 
+                    layout="vertical"
+                    margin={{ left: 140, right: 20, top: 20, bottom: 20 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                     <XAxis type="number" stroke="rgba(255,255,255,0.7)" tick={{ fill: 'rgba(255,255,255,0.7)' }} />
-                    <YAxis dataKey="category" type="category" stroke="rgba(255,255,255,0.7)" tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }} />
+                    <YAxis 
+                      dataKey="category" 
+                      type="category" 
+                      stroke="rgba(255,255,255,0.7)" 
+                      tick={{ fill: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 500 }}
+                      width={130}
+                      interval={0}
+                    />
                     <Tooltip 
                       formatter={(value) => formatCurrency(value)}
                       contentStyle={{ 
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
                         borderRadius: '8px',
-                        color: 'white'
+                        color: 'white',
+                        padding: '12px 16px'
                       }}
+                      labelStyle={{ color: 'white', fontWeight: 600, marginBottom: '8px' }}
+                      itemStyle={{ color: 'white' }}
                     />
                     <Legend wrapperStyle={{ color: 'white' }} />
                     <Bar dataKey="period1" fill="#00AEEF" name={comparisonData.period1.label} radius={[0, 8, 8, 0]} />
