@@ -35,7 +35,7 @@ const Navbar = () => {
   };
 
   const navLinkClass = (path) => {
-    const base = 'px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2 relative group mx-1';
+    const base = 'px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2 relative group mx-1.5';
     if (isActive(path)) {
       return `${base} bg-white/20 text-white shadow-lg backdrop-blur-sm`;
     }
@@ -74,9 +74,9 @@ const Navbar = () => {
   return (
     <>
       <nav className="glass-card sticky top-0 z-50 mb-6 mx-2 sm:mx-4 mt-2 sm:mt-4 shadow-xl backdrop-blur-xl" style={{ position: 'relative', zIndex: 100 }}>
-        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+        <div className="container mx-auto px-2 sm:px-3 md:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-lg sm:text-xl md:text-2xl font-bold text-white hover:scale-105 transition-transform duration-300 active:scale-95">
+            <Link to="/" className="text-lg sm:text-xl md:text-2xl font-bold text-white hover:scale-105 transition-transform duration-300 active:scale-95 -ml-1 sm:-ml-2">
               <span className="flex items-center space-x-2">
                 <span className="text-xl sm:text-2xl">📊</span>
                 <span className="hidden sm:inline">Ontario Tech <span className="text-orange">ExpenseTrack</span></span>
@@ -85,7 +85,7 @@ const Navbar = () => {
             </Link>
             
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-2 xl:space-x-3">
+            <div className="hidden lg:flex items-center space-x-3 xl:space-x-4">
               {authenticated ? (
                 <>
                   {navLinks.slice(0, -1).map((link) => (
@@ -102,7 +102,7 @@ const Navbar = () => {
                     </Link>
                   ))}
                   {currentUser && (
-                    <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-white/20">
+                    <div className="flex items-center space-x-3 ml-8 pl-8 border-l border-white/20">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange to-orange-600 flex items-center justify-center text-white font-bold shadow-lg">
                         {getInitials(currentUser.email)}
                       </div>
@@ -111,7 +111,7 @@ const Navbar = () => {
                   )}
                   <button
                     onClick={handleLogout}
-                    className="btn-gradient ml-4"
+                    className="btn-gradient ml-6"
                   >
                     🚪 Logout
                   </button>
