@@ -35,7 +35,7 @@ const Navbar = () => {
   };
 
   const navLinkClass = (path) => {
-    const base = 'px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2 relative group';
+    const base = 'px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2 relative group mx-1';
     if (isActive(path)) {
       return `${base} bg-white/20 text-white shadow-lg backdrop-blur-sm`;
     }
@@ -85,7 +85,7 @@ const Navbar = () => {
             </Link>
             
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-1 xl:space-x-2">
+            <div className="hidden lg:flex items-center space-x-2 xl:space-x-3">
               {authenticated ? (
                 <>
                   {navLinks.slice(0, -1).map((link) => (
@@ -102,7 +102,7 @@ const Navbar = () => {
                     </Link>
                   ))}
                   {currentUser && (
-                    <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-white/20">
+                    <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-white/20">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange to-orange-600 flex items-center justify-center text-white font-bold shadow-lg">
                         {getInitials(currentUser.email)}
                       </div>
@@ -111,7 +111,7 @@ const Navbar = () => {
                   )}
                   <button
                     onClick={handleLogout}
-                    className="btn-gradient ml-2"
+                    className="btn-gradient ml-4"
                   >
                     🚪 Logout
                   </button>
