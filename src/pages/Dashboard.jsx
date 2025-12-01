@@ -4,6 +4,7 @@ import Card from '../components/Card';
 import ChartContainer from '../components/ChartContainer';
 import Button from '../components/Button';
 import { isAuthenticated } from '../utils/auth';
+import { manualRefreshSession } from '../utils/sessionKeepAlive';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar 
@@ -207,9 +208,18 @@ const Dashboard = () => {
           </h1>
           <p className="text-white/80 text-sm">Overview of your financial health</p>
         </div>
-        <Button variant="secondary" onClick={loadData} className="shadow-xl text-sm">
-          🔄 Refresh Data
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="secondary" 
+            onClick={async () => {
+              await manualRefreshSession();
+              await loadData();
+            }} 
+            className="shadow-xl text-sm"
+          >
+            🔄 Refresh Data
+          </Button>
+        </div>
       </div>
 
       {sessionExpired && (

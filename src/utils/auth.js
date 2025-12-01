@@ -1,6 +1,7 @@
 // Authentication Utilities using Supabase
 
 import { supabase } from './supabase';
+import { startSessionKeepAlive, stopSessionKeepAlive } from './sessionKeepAlive';
 
 export const signup = async (email, password) => {
   try {
@@ -30,6 +31,11 @@ export const login = async (email, password) => {
       return { success: false, message: error.message };
     }
 
+    // Start session keep-alive after successful login
+    if (data.user) {
+      startSessionKeepAlive();
+    }
+
     return { success: true, user: data.user };
   } catch (error) {
     return { success: false, message: error.message || 'An error occurred during login' };
@@ -38,6 +44,8 @@ export const login = async (email, password) => {
 
 export const logout = async () => {
   try {
+    // Stop keep-alive service before logging out
+    stopSessionKeepAlive();
     await supabase.auth.signOut();
   } catch (error) {
     console.error('Error logging out:', error);
