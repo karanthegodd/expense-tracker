@@ -57,7 +57,7 @@ const Modal = ({
       aria-labelledby="modal-title"
     >
       <div
-        className="glass-card p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto animate-scale-in"
+        className="glass-card p-6 md:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">

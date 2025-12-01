@@ -1092,60 +1092,72 @@ const Dashboard = () => {
             {budgetPieData.length > 0 ? (
               <div>
                 <h3 className="text-white font-semibold mb-4 text-lg">Expense Breakdown</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={budgetPieData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={false}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="amount"
-                      animationBegin={0}
-                      animationDuration={800}
-                    >
-                      {budgetPieData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={extendedPieColors[index % extendedPieColors.length]}
-                          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value, name, props) => {
-                        const total = budgetPieData.reduce((sum, item) => sum + item.amount, 0);
-                        const percent = ((props.payload.amount / total) * 100).toFixed(1);
-                        return [
-                          `${props.payload.fullName}: ${percent}%`,
-                          formatCurrency(value)
-                        ];
-                      }}
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        borderRadius: '12px',
-                        color: 'white',
-                        padding: '12px 16px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
-                      }}
-                    />
-                    <Legend 
-                      formatter={(value, entry) => {
-                        const total = budgetPieData.reduce((sum, item) => sum + item.amount, 0);
-                        const percent = ((entry.payload.amount / total) * 100).toFixed(0);
-                        return `${entry.payload.fullName}: ${percent}%`;
-                      }}
-                      wrapperStyle={{ color: 'white', paddingTop: '20px', fontSize: '13px' }}
-                      iconType="circle"
-                      iconSize={12}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div className="grid md:grid-cols-2 gap-6 items-center">
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={budgetPieData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={false}
+                        outerRadius={90}
+                        fill="#8884d8"
+                        dataKey="amount"
+                        animationBegin={0}
+                        animationDuration={800}
+                      >
+                        {budgetPieData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={extendedPieColors[index % extendedPieColors.length]}
+                            style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value, name, props) => {
+                          const total = budgetPieData.reduce((sum, item) => sum + item.amount, 0);
+                          const percent = ((props.payload.amount / total) * 100).toFixed(1);
+                          return [
+                            `${props.payload.fullName}: ${percent}%`,
+                            formatCurrency(value)
+                          ];
+                        }}
+                        contentStyle={{ 
+                          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          borderRadius: '12px',
+                          color: 'white',
+                          padding: '12px 16px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  
+                  {/* Custom Legend - More Readable */}
+                  <div className="space-y-3">
+                    {budgetPieData.map((entry, index) => {
+                      const total = budgetPieData.reduce((sum, item) => sum + item.amount, 0);
+                      const percent = ((entry.amount / total) * 100).toFixed(1);
+                      return (
+                        <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+                          <div 
+                            className="w-4 h-4 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: extendedPieColors[index % extendedPieColors.length] }}
+                          ></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-semibold text-sm truncate">{entry.fullName}</p>
+                            <p className="text-white/70 text-xs">{formatCurrency(entry.amount)} • {percent}%</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="text-center py-8 text-white/60">
