@@ -327,6 +327,7 @@ export const getBudgets = async (email = null) => {
       id: item.id,
       category: item.category || '',
       amount: parseFloat(item.amount),
+      expirationDate: item.expiration_date || null,
     }));
   } catch (error) {
     console.error('Error in getBudgets:', error);
@@ -345,6 +346,7 @@ export const addBudget = async (budget, email = null) => {
         user_id: userId,
         category: budget.category || '',
         amount: parseFloat(budget.amount),
+        expiration_date: budget.expirationDate || budget.expiration_date || null,
       })
       .select()
       .single();
@@ -358,6 +360,7 @@ export const addBudget = async (budget, email = null) => {
       id: data.id,
       category: data.category || '',
       amount: parseFloat(data.amount),
+      expirationDate: data.expiration_date || null,
     };
   } catch (error) {
     console.error('Error in addBudget:', error);
@@ -373,6 +376,8 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
     const updateData = {};
     if (updatedBudget.category !== undefined) updateData.category = updatedBudget.category;
     if (updatedBudget.amount !== undefined) updateData.amount = parseFloat(updatedBudget.amount);
+    if (updatedBudget.expirationDate !== undefined) updateData.expiration_date = updatedBudget.expirationDate || null;
+    if (updatedBudget.expiration_date !== undefined) updateData.expiration_date = updatedBudget.expiration_date || null;
 
     const { data, error } = await supabase
       .from('budgets')
@@ -391,6 +396,7 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
       id: data.id,
       category: data.category || '',
       amount: parseFloat(data.amount),
+      expirationDate: data.expiration_date || null,
     };
   } catch (error) {
     console.error('Error in updateBudget:', error);

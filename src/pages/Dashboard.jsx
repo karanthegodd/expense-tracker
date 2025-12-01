@@ -431,7 +431,11 @@ const Dashboard = () => {
       {/* Charts Row 1: Line Chart and Pie Chart */}
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <ChartContainer 
-          title={`Income vs Expenses - ${new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`} 
+          title={`Income vs Expenses - ${(() => {
+            const [year, month] = selectedMonth.split('-').map(Number);
+            const date = new Date(year, month - 1, 1);
+            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          })()}`} 
           icon="📈"
         >
           <ResponsiveContainer width="100%" height={350}>

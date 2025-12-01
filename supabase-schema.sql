@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS budgets (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   category TEXT NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
+  expiration_date DATE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

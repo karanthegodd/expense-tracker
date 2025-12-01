@@ -23,6 +23,7 @@ const FinancialPlanning = () => {
   const [budgetFormData, setBudgetFormData] = useState({
     category: '',
     amount: '',
+    expirationDate: '',
   });
   const [budgetFormErrors, setBudgetFormErrors] = useState({});
   const [loading, setLoading] = useState(true);
@@ -203,6 +204,7 @@ const FinancialPlanning = () => {
     setBudgetFormData({
       category: budget.category,
       amount: budget.amount,
+      expirationDate: budget.expirationDate || '',
     });
     setEditingBudgetId(budget.id);
     setShowBudgetForm(true);
@@ -235,6 +237,7 @@ const FinancialPlanning = () => {
     setBudgetFormData({
       category: '',
       amount: '',
+      expirationDate: '',
     });
     setEditingBudgetId(null);
     setShowBudgetForm(false);
@@ -577,6 +580,21 @@ const FinancialPlanning = () => {
                   {budgetFormErrors.amount}
                 </p>
               )}
+            </div>
+            <div>
+              <label className="block text-white/90 font-semibold mb-2 text-sm">
+                Expiration Date (Optional)
+              </label>
+              <input
+                type="date"
+                value={budgetFormData.expirationDate}
+                onChange={(e) => setBudgetFormData({ ...budgetFormData, expirationDate: e.target.value })}
+                className="input-glass w-full"
+                min={new Date().toISOString().split('T')[0]}
+              />
+              <p className="text-white/60 text-xs mt-1">
+                💡 Leave empty for a budget that never expires
+              </p>
             </div>
             <div className="flex space-x-4 pt-2">
               <Button type="submit" variant="primary" className="flex-1">
@@ -1078,6 +1096,15 @@ const FinancialPlanning = () => {
                     </div>
                   </div>
                   
+                    {/* Expiration Date */}
+                    {budget.expirationDate && (
+                      <div className="mb-4 p-3 bg-orange-500/10 rounded-lg border border-orange-400/20">
+                        <p className="text-xs text-orange-300/80">
+                          📅 Expires: {new Date(budget.expirationDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                      </div>
+                    )}
+                    
                     {/* Info Box */}
                     <div className="mb-4 p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
                       <p className="text-xs text-blue-300/80">
