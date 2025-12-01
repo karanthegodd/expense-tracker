@@ -1388,8 +1388,17 @@ const Dashboard = () => {
         </h2>
         {(() => {
           // Filter transactions for selected month and limit to 10 most recent
+          // Use allIncomes and allExpenses instead of recentTransactions to get all transactions for the month
           const [year, month] = selectedMonth.split('-').map(Number);
-          const filteredTransactions = (data.recentTransactions || []).filter(transaction => {
+          
+          // Combine all incomes and expenses with type indicator
+          const allTransactions = [
+            ...(data.allIncomes || []).map(inc => ({ ...inc, type: 'income' })),
+            ...(data.allExpenses || []).map(exp => ({ ...exp, type: 'expense' }))
+          ];
+          
+          // Filter by selected month and sort by date descending, then limit to 10
+          const filteredTransactions = allTransactions.filter(transaction => {
             if (!transaction.date) return false;
             const transDate = parseLocalDate(transaction.date);
             if (!transDate) return false;
