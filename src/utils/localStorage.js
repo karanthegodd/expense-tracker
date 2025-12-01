@@ -905,17 +905,18 @@ export const getTotals = async (email = null) => {
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   
+  console.log('getTotals - Current date:', new Date().toLocaleDateString());
   console.log('getTotals - Filtering for month:', currentMonth + 1, 'year:', currentYear);
   console.log('getTotals - Total incomes before filter:', incomes.length);
   console.log('getTotals - Total expenses before filter:', expenses.length);
   
-  // Filter current month data
+  // Filter current month data for charts
   const monthlyIncomes = incomes.filter(inc => {
     if (!inc.date) return false;
     const incDate = new Date(inc.date);
     const matches = incDate.getMonth() === currentMonth && incDate.getFullYear() === currentYear;
     if (!matches && incomes.length > 0) {
-      console.log('Income not in current month:', inc.date, 'vs', `${currentYear}-${currentMonth + 1}`);
+      console.log('Income not in current month:', inc.date, 'Date object:', incDate, 'vs current:', `${currentYear}-${currentMonth + 1}`);
     }
     return matches;
   });
@@ -925,7 +926,7 @@ export const getTotals = async (email = null) => {
     const expDate = new Date(exp.date);
     const matches = expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
     if (!matches && expenses.length > 0) {
-      console.log('Expense not in current month:', exp.date, 'vs', `${currentYear}-${currentMonth + 1}`);
+      console.log('Expense not in current month:', exp.date, 'Date object:', expDate, 'vs current:', `${currentYear}-${currentMonth + 1}`);
     }
     return matches;
   });
@@ -933,21 +934,28 @@ export const getTotals = async (email = null) => {
   console.log('getTotals - Monthly incomes after filter:', monthlyIncomes.length);
   console.log('getTotals - Monthly expenses after filter:', monthlyExpenses.length);
   
-  const totalIncome = monthlyIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
-  const totalExpenses = monthlyExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+  // Calculate ALL-TIME totals (not just current month) for the main KPI cards
+  const totalIncome = incomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
   const totalSaved = totalIncome - totalExpenses;
   
-  // Category breakdown
+  console.log('getTotals - ALL-TIME totals:', {
+    totalIncome,
+    totalExpenses,
+    totalSaved
+  });
+  
+  // Category breakdown - use ALL expenses, not just current month
   const categoryBreakdown = {};
-  monthlyExpenses.forEach(exp => {
+  expenses.forEach(exp => {
     const category = exp.category || 'Uncategorized';
     categoryBreakdown[category] = (categoryBreakdown[category] || 0) + parseFloat(exp.amount || 0);
   });
   
-  // Recent transactions (last 10)
+  // Recent transactions (last 10) - show ALL transactions, not just current month
   const allTransactions = [
-    ...monthlyIncomes.map(inc => ({ ...inc, type: 'income' })),
-    ...monthlyExpenses.map(exp => ({ ...exp, type: 'expense' }))
+    ...incomes.map(inc => ({ ...inc, type: 'income' })),
+    ...expenses.map(exp => ({ ...exp, type: 'expense' }))
   ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
   
   // Budget progress
