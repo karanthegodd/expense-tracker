@@ -51,11 +51,14 @@ const Dashboard = () => {
       console.log('Dashboard: Fetching totals...');
       const totals = await getTotals();
       console.log('Dashboard: Totals received:', totals);
+      console.log('Dashboard: Budgets in totals:', totals.budgets);
+      console.log('Dashboard: Budgets count:', (totals.budgets || []).length);
       // Store all incomes and expenses for month filtering
       setData({
         ...totals,
         allIncomes: totals.allIncomes || totals.monthlyIncomes || [],
         allExpenses: totals.allExpenses || totals.monthlyExpenses || [],
+        budgets: totals.budgets || [], // Ensure budgets are included
       });
     } catch (error) {
       console.error('❌ Error loading dashboard data:', error);

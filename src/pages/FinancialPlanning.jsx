@@ -110,10 +110,14 @@ const FinancialPlanning = () => {
       console.log('🔄 Loading budgets...');
       const data = await getBudgets();
       console.log('📊 Loaded budgets:', data);
-      setBudgets(data || []);
+      console.log('📊 Budgets count:', (data || []).length);
+      // Force state update with new array reference
+      setBudgets([...(data || [])]);
+      setBudgetRefreshKey(prev => prev + 1);
       console.log('✅ Budgets state updated, count:', (data || []).length);
     } catch (error) {
       console.error('❌ Error loading budgets:', error);
+      console.error('Error details:', error.message, error.stack);
       setBudgets([]);
     }
   };
