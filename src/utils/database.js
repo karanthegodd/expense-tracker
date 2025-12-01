@@ -409,7 +409,33 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
         : null;
     }
 
+    // Ensure we have at least one field to update
+    if (Object.keys(updateData).length === 0) {
+      console.warn('⚠️ updateBudget: No fields to update');
+      // Still try to fetch the current budget to return it
+      const { data: currentData } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', userId)
+        .single();
+      
+      if (currentData) {
+        return {
+          id: currentData.id,
+          category: currentData.category || '',
+          amount: parseFloat(currentData.amount),
+          startDate: currentData.start_date || null,
+          expirationDate: currentData.expiration_date || null,
+          createdAt: currentData.created_at || null,
+        };
+      }
+      return null;
+    }
+
     console.log('🔄 updateBudget - Updating with data:', updateData);
+    console.log('🔄 updateBudget - Budget ID:', id);
+    console.log('🔄 updateBudget - User ID:', userId);
 
     const { data, error } = await supabase
       .from('budgets')
@@ -421,8 +447,12 @@ export const updateBudget = async (id, updatedBudget, email = null) => {
 
     if (error) {
       console.error('❌ Error updating budget:', error);
-      console.error('Error details:', error.message, error.details, error.hint);
-      return null;
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
+      // Throw error so it can be caught and displayed
+      throw new Error(error.message || 'Failed to update budget');
     }
 
     console.log('✅ updateBudget - Success:', data);

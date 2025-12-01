@@ -182,7 +182,9 @@ const FinancialPlanning = () => {
       };
       
       if (editingBudgetId) {
+        console.log('🔄 Updating budget:', editingBudgetId, normalizedBudgetData);
         const result = await updateBudget(editingBudgetId, normalizedBudgetData);
+        console.log('📊 Update result:', result);
         if (result) {
           showToast('Budget updated', 'success');
           resetBudgetForm();
@@ -191,7 +193,8 @@ const FinancialPlanning = () => {
           setExpenses(expensesData || []);
           await loadBudgets();
         } else {
-          showToast('Failed to update budget', 'error');
+          // Check console for detailed error - it's already logged there
+          showToast('Failed to update budget. Check console for details.', 'error');
         }
       } else {
         const result = await addBudget(normalizedBudgetData);
@@ -207,9 +210,10 @@ const FinancialPlanning = () => {
         }
       }
     } catch (error) {
-      console.error('Error in handleBudgetSubmit:', error);
+      console.error('❌ Error in handleBudgetSubmit:', error);
       console.error('Error details:', error.message, error.stack);
-      showToast(`An error occurred: ${error.message || 'Please try again.'}`, 'error');
+      const errorMessage = error.message || 'Please try again.';
+      showToast(`Failed to update budget: ${errorMessage}`, 'error');
     }
   };
 
