@@ -130,6 +130,15 @@ const Dashboard = () => {
     };
   }, []);
 
+  // Force re-render when selected month changes so charts and budgets update
+  useEffect(() => {
+    // The calculations already use selectedMonth, but we need to trigger a re-render
+    // This ensures all derived data (charts, budgets) recalculate
+    if (data.allIncomes || data.allExpenses) {
+      setData(prevData => ({ ...prevData }));
+    }
+  }, [selectedMonth]);
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-CA', {
       style: 'currency',
@@ -212,7 +221,7 @@ const Dashboard = () => {
         day: day,
         date: dateStr,
         income: cumulativeIncome,
-        expenses: cumulativeExpenses, // Already using absolute values above
+        expenses: cumulativeExpenses, // Can be negative if refunds exceed expenses
       });
     }
     
