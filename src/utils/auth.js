@@ -54,9 +54,31 @@ export const logout = async () => {
 
 export const isAuthenticated = async () => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error checking authentication:', error);
+      return false;
+    }
+    
+    // Check if session is expired
+    if (session) {
+      const expiresAt = session.expires_at;
+      const now = Math.floor(Date.now() / 1000);
+      if (expiresAt && expiresAt < now) {
+        console.log('Session expired, attempting refresh...');
+        // Try to refresh
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshData?.session) {
+          console.error('Failed to refresh expired session:', refreshError);
+          return false;
+        }
+        return true;
+      }
+    }
+    
     return !!session;
   } catch (error) {
+    console.error('Error in isAuthenticated:', error);
     return false;
   }
 };

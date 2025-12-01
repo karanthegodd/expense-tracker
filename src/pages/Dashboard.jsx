@@ -244,7 +244,9 @@ const Dashboard = () => {
           <Button 
             variant="secondary" 
             onClick={async () => {
-              await manualRefreshSession();
+              console.log('Manual refresh triggered');
+              const refreshed = await manualRefreshSession();
+              console.log('Session refreshed:', refreshed);
               await loadData();
             }} 
             className="shadow-xl text-sm"
@@ -262,17 +264,29 @@ const Dashboard = () => {
               <div>
                 <h3 className="text-lg font-bold text-white mb-1">Session Expired</h3>
                 <p className="text-white/80 text-sm">
-                  Your session has expired. Please refresh the page or log in again to see your data.
+                  Your session has expired. Please log out and log back in to see your data.
                 </p>
               </div>
             </div>
-            <Button 
-              variant="primary" 
-              onClick={() => window.location.reload()}
-              className="shadow-xl"
-            >
-              🔄 Refresh Page
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="primary" 
+                onClick={async () => {
+                  await manualRefreshSession();
+                  await loadData();
+                }}
+                className="shadow-xl"
+              >
+                🔄 Refresh Session
+              </Button>
+              <Button 
+                variant="secondary" 
+                onClick={() => window.location.href = '/login'}
+                className="shadow-xl"
+              >
+                Go to Login
+              </Button>
+            </div>
           </div>
         </Card>
       )}
