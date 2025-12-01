@@ -203,6 +203,9 @@ const Dashboard = () => {
     const budgets = data.budgets || [];
     const allExpenses = data.allExpenses || [];
     
+    console.log('🔍 getBudgetProgressData - All budgets:', budgets);
+    console.log('🔍 getBudgetProgressData - All expenses count:', allExpenses.length);
+    
     return budgets
       .filter(budget => {
         // Only show budgets that were active during the selected month
@@ -222,10 +225,6 @@ const Dashboard = () => {
         if (budget.createdAt) {
           startDate = new Date(budget.createdAt);
           startDate.setHours(0, 0, 0, 0);
-        } else {
-          // If createdAt is missing, we can't determine when budget started
-          // In this case, count all expenses (fallback for old budgets)
-          console.warn('Budget missing createdAt:', budget);
         }
         
         // End date: expiration date if set and passed, otherwise use current date
@@ -241,34 +240,62 @@ const Dashboard = () => {
           }
         }
         
-        // Filter expenses by category and budget active period (cumulative from creation to expiration/now)
-        const categoryExpenses = allExpenses.filter(exp => exp.category === budget.category);
+        // Filter expenses by category first
+        const categoryExpenses = allExpenses.filter(exp => {
+          const matches = exp.category === budget.category;
+          if (budget.category === 'Shopping' && matches) {
+            console.log('✅ Found Shopping expense:', exp);
+          }
+          return matches;
+        });
+        
+        console.log(`📊 Budget "${budget.category}": Found ${categoryExpenses.length} expenses in category`);
+        
+        // Then filter by date range
         const spent = categoryExpenses
           .filter(exp => {
-            if (!exp.date) return false;
+            if (!exp.date) {
+              console.warn('⚠️ Expense missing date:', exp);
+              return false;
+            }
             
             const expDate = new Date(exp.date);
             expDate.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
             
             // Only count expenses within the budget's active period (from creation to expiration/now)
-            if (startDate && expDate < startDate) return false;
-            if (expDate > endDate) return false;
+            if (startDate && expDate < startDate) {
+              if (budget.category === 'Shopping') {
+                console.log('❌ Expense before startDate:', exp.date, 'startDate:', startDate);
+              }
+              return false;
+            }
+            if (expDate > endDate) {
+              if (budget.category === 'Shopping') {
+                console.log('❌ Expense after endDate:', exp.date, 'endDate:', endDate);
+              }
+              return false;
+            }
             
+            if (budget.category === 'Shopping') {
+              console.log('✅ Counting expense:', exp.date, 'amount:', exp.amount);
+            }
             return true;
           })
           .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
         
-        // Debug logging
+        // Debug logging for Shopping budget
         if (budget.category === 'Shopping') {
-          console.log('Budget Debug - Shopping:', {
+          console.log('🎯 Budget Debug - Shopping:', {
             category: budget.category,
             createdAt: budget.createdAt,
             startDate: startDate,
             expirationDate: budget.expirationDate,
             endDate: endDate,
             totalCategoryExpenses: categoryExpenses.length,
+            categoryExpenses: categoryExpenses.map(e => ({ date: e.date, amount: e.amount })),
             spent: spent,
-            budgetAmount: budget.amount
+            budgetAmount: budget.amount,
+            remaining: parseFloat(budget.amount) - spent
           });
         }
         
