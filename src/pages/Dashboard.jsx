@@ -3,6 +3,7 @@ import { getTotals } from '../utils/database';
 import Card from '../components/Card';
 import ChartContainer from '../components/ChartContainer';
 import Button from '../components/Button';
+import Modal from '../components/Modal';
 import { isAuthenticated } from '../utils/auth';
 import { manualRefreshSession } from '../utils/sessionKeepAlive';
 import { formatDateEST, parseLocalDate, getTodayDateEST } from '../utils/dateUtils';
@@ -27,6 +28,7 @@ const Dashboard = () => {
     allExpenses: [],
   });
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [selectedBudget, setSelectedBudget] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     // Default to current month in format YYYY-MM
     const now = new Date();
@@ -259,9 +261,9 @@ const Dashboard = () => {
     return Object.entries(categoryBreakdown)
       .filter(([category, amount]) => amount > 0) // Only show positive spending
       .map(([category, amount]) => ({
-        category,
-        amount: parseFloat(amount.toFixed(2)),
-      }));
+    category,
+    amount: parseFloat(amount.toFixed(2)),
+  }));
   };
 
   const categoryData = getCategoryData();
@@ -526,6 +528,96 @@ const Dashboard = () => {
 
   const forecastData = getUpcomingForecastData();
 
+  // Get expenses for selected budget
+  const getBudgetExpenses = (budgetItem) => {
+    if (!budgetItem) return [];
+    
+    const allExpenses = data.allExpenses || [];
+    const budgets = data.budgets || [];
+    const budget = budgets.find(b => b.category === budgetItem.category);
+    
+    if (!budget) return [];
+    
+    // Use same logic as getBudgetProgressData to filter expenses
+    let startDate = null;
+    if (budget.startDate) {
+      startDate = parseLocalDate(budget.startDate);
+      if (startDate) {
+        startDate.setHours(0, 0, 0, 0);
+      }
+    } else if (budget.createdAt) {
+      startDate = new Date(budget.createdAt);
+      startDate.setHours(0, 0, 0, 0);
+    }
+    
+    let endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    
+    if (budget.expirationDate) {
+      const expirationDate = parseLocalDate(budget.expirationDate);
+      if (expirationDate) {
+        expirationDate.setHours(23, 59, 59, 999);
+        endDate = expirationDate;
+      }
+    }
+    
+    return allExpenses
+      .filter(exp => {
+        if (!exp || !exp.date || exp.category !== budget.category) return false;
+        const expDate = parseLocalDate(exp.date);
+        if (!expDate) return false;
+        
+        if (startDate) {
+          const startDateNormalized = new Date(startDate);
+          startDateNormalized.setHours(0, 0, 0, 0);
+          if (expDate < startDateNormalized) return false;
+        }
+        
+        const endDateNormalized = new Date(endDate);
+        endDateNormalized.setHours(23, 59, 59, 999);
+        if (expDate > endDateNormalized) return false;
+        
+        return true;
+      })
+      .sort((a, b) => {
+        const dateA = parseLocalDate(a.date);
+        const dateB = parseLocalDate(b.date);
+        return dateB - dateA; // Most recent first
+      });
+  };
+
+  // Get pie chart data for budget expenses (grouped by expense name/description)
+  const getBudgetExpensePieData = (expenses) => {
+    const expenseMap = {};
+    expenses.forEach(exp => {
+      const name = exp.name || exp.description || 'Unnamed Expense';
+      if (!expenseMap[name]) {
+        expenseMap[name] = {
+          name: name,
+          amount: 0,
+          count: 0
+        };
+      }
+      expenseMap[name].amount += parseFloat(exp.amount || 0);
+      expenseMap[name].count += 1;
+    });
+    
+    return Object.values(expenseMap)
+      .map(item => ({
+        name: item.name.length > 20 ? item.name.substring(0, 20) + '...' : item.name,
+        fullName: item.name,
+        amount: Math.abs(item.amount), // Use absolute value for pie chart
+        count: item.count,
+        isRefund: item.amount < 0
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  };
+
+  const budgetExpenses = selectedBudget ? getBudgetExpenses(selectedBudget) : [];
+  const budgetPieData = getBudgetExpensePieData(budgetExpenses);
+  // Use extended pie colors for budget expenses (more colors for more expense items)
+  const extendedPieColors = ['#FF6A00', '#00AEEF', '#002145', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#9C27B0', '#FF9800', '#2196F3'];
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 fade-in">
@@ -677,13 +769,13 @@ const Dashboard = () => {
         
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <div className="kpi-card slide-up" style={{ animationDelay: '0.1s' }}>
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.1s' }}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Monthly Income</h3>
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                   <span className="text-lg">💰</span>
-                </div>
-              </div>
+            </div>
+          </div>
               <p className="text-2xl font-bold">{formatCurrency(monthIncome)}</p>
               <p className="text-xs text-white/60 mt-1">All-time: {formatCurrency(data.totalIncome)}</p>
         </div>
@@ -729,11 +821,11 @@ const Dashboard = () => {
                 <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Upcoming</h3>
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                   <span className="text-lg">📅</span>
-                </div>
-              </div>
-              <p className="text-2xl font-bold">{formatCurrency(data.totalUpcoming)}</p>
             </div>
           </div>
+              <p className="text-2xl font-bold">{formatCurrency(data.totalUpcoming)}</p>
+        </div>
+      </div>
         );
       })()}
 
@@ -876,16 +968,24 @@ const Dashboard = () => {
           </h2>
           <div className="space-y-4">
             {budgetProgressData.map((item, index) => (
-              <div key={item.category} className="glass-card p-4 slide-up" style={{ animationDelay: `${0.1 * index}s` }}>
+              <div 
+                key={item.category} 
+                className="glass-card p-4 slide-up cursor-pointer hover:bg-white/10 transition-all duration-200" 
+                style={{ animationDelay: `${0.1 * index}s` }}
+                onClick={() => setSelectedBudget(item)}
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-white">{item.category}</span>
+                  <span className="font-semibold text-white flex items-center gap-2">
+                    {item.category}
+                    <span className="text-xs text-white/60">(Click to view expenses)</span>
+                  </span>
                   <div className="flex items-center space-x-4 text-sm text-white/80">
                     <span>Budget: {formatCurrency(item.budget)}</span>
                     <span>
                       {item.spent < 0 ? (
                         <span className="text-green-300">Net Spent: {formatCurrency(Math.abs(item.spent))} <span className="text-xs">(Refunds applied)</span></span>
                       ) : (
-                        <span>Spent: {formatCurrency(item.spent)}</span>
+                    <span>Spent: {formatCurrency(item.spent)}</span>
                       )}
                     </span>
                     <span className={`font-bold ${item.remaining >= 0 ? 'text-green-300' : 'text-red-300'}`}>
@@ -905,14 +1005,14 @@ const Dashboard = () => {
                     ></div>
                   ) : (
                     <>
-                      <div
-                        className="h-4 rounded-full transition-all duration-500"
-                        style={{ 
+                  <div
+                    className="h-4 rounded-full transition-all duration-500"
+                    style={{ 
                           width: `${Math.min(item.percentage, 100)}%`,
-                          backgroundColor: item.color,
-                          boxShadow: `0 0 10px ${item.color}50`
-                        }}
-                      ></div>
+                      backgroundColor: item.color,
+                      boxShadow: `0 0 10px ${item.color}50`
+                    }}
+                  ></div>
                       {item.percentage > 100 && (
                         <div 
                           className="absolute top-0 h-4 bg-red-600 rounded-r-full"
@@ -947,6 +1047,145 @@ const Dashboard = () => {
           </div>
         </Card>
       )}
+
+      {/* Budget Expenses Modal */}
+      <Modal
+        isOpen={selectedBudget !== null}
+        onClose={() => setSelectedBudget(null)}
+        title={`${selectedBudget?.category} Budget Expenses`}
+        type="alert"
+        confirmText="Close"
+      >
+        {selectedBudget && (
+          <div className="space-y-6">
+            {/* Budget Summary */}
+            <div className="glass-card p-4 bg-white/5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <p className="text-white/60 text-xs mb-1">Budget</p>
+                  <p className="text-white font-bold text-lg">{formatCurrency(selectedBudget.budget)}</p>
+                </div>
+                <div>
+                  <p className="text-white/60 text-xs mb-1">Spent</p>
+                  <p className={`font-bold text-lg ${selectedBudget.spent < 0 ? 'text-green-300' : 'text-white'}`}>
+                    {formatCurrency(selectedBudget.spent)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-white/60 text-xs mb-1">Remaining</p>
+                  <p className={`font-bold text-lg ${selectedBudget.remaining >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                    {formatCurrency(selectedBudget.remaining)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-white/60 text-xs mb-1">Progress</p>
+                  <p className="text-white font-bold text-lg">{selectedBudget.percentage.toFixed(1)}%</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pie Chart */}
+            {budgetPieData.length > 0 ? (
+              <div>
+                <h3 className="text-white font-semibold mb-4 text-lg">Expense Breakdown</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={budgetPieData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="amount"
+                      animationBegin={0}
+                      animationDuration={800}
+                    >
+                      {budgetPieData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={extendedPieColors[index % extendedPieColors.length]}
+                          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value, name, props) => {
+                        const total = budgetPieData.reduce((sum, item) => sum + item.amount, 0);
+                        const percent = ((props.payload.amount / total) * 100).toFixed(1);
+                        return [
+                          `${props.payload.fullName}: ${percent}%`,
+                          formatCurrency(value)
+                        ];
+                      }}
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        borderRadius: '12px',
+                        color: 'white',
+                        padding: '12px 16px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-white/60">
+                <span className="text-4xl mb-3 block">📊</span>
+                <p className="text-sm">No expenses in this budget yet</p>
+              </div>
+            )}
+
+            {/* Expenses List */}
+            {budgetExpenses.length > 0 && (
+              <div>
+                <h3 className="text-white font-semibold mb-4 text-lg">All Expenses ({budgetExpenses.length})</h3>
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {budgetExpenses.map((exp, idx) => {
+                    const amount = parseFloat(exp.amount || 0);
+                    const isRefund = amount < 0;
+                    return (
+                      <div 
+                        key={exp.id || idx} 
+                        className="glass-card p-3 flex items-center justify-between hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <p className="text-white font-medium">{exp.name || exp.description || 'Unnamed Expense'}</p>
+                          <p className="text-white/60 text-xs mt-1">
+                            {formatDateEST(exp.date)}
+                            {exp.description && exp.description !== exp.name && (
+                              <span className="ml-2">• {exp.description}</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`font-bold text-lg ${isRefund ? 'text-green-300' : 'text-red-300'}`}>
+                            {isRefund ? (
+                              <span className="flex items-center gap-1">
+                                <span>↩️</span>
+                                <span>+{formatCurrency(Math.abs(amount))}</span>
+                              </span>
+                            ) : (
+                              <span>-{formatCurrency(amount)}</span>
+                            )}
+                          </p>
+                          {isRefund && (
+                            <p className="text-green-300/80 text-xs mt-1">Refund</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
       {/* Savings Goals and Upcoming Expenses Row */}
       <div className="grid md:grid-cols-2 gap-4 mb-6">
