@@ -13,7 +13,12 @@ export const getCurrentUserEmail = async () => {
 export const getIncomes = async (email = null) => {
   try {
     const userId = await getCurrentUserId();
-    if (!userId) return [];
+    console.log('getIncomes - userId:', userId);
+    
+    if (!userId) {
+      console.warn('⚠️ getIncomes: No userId, returning empty array');
+      return [];
+    }
 
     const { data, error } = await supabase
       .from('incomes')
@@ -22,12 +27,18 @@ export const getIncomes = async (email = null) => {
       .order('date', { ascending: false });
 
     if (error) {
-      console.error('Error fetching incomes:', error);
+      console.error('❌ Error fetching incomes:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return [];
     }
 
+    console.log('getIncomes - Raw data from Supabase:', data?.length || 0, 'items');
+    if (data && data.length > 0) {
+      console.log('getIncomes - Sample item:', data[0]);
+    }
+
     // Transform data to match expected format
-    return (data || []).map(item => ({
+    const transformed = (data || []).map(item => ({
       id: item.id,
       source: item.description || item.category || '',
       amount: parseFloat(item.amount),
@@ -36,8 +47,12 @@ export const getIncomes = async (email = null) => {
       date: item.date,
       isRefund: item.is_refund || false,
     }));
+    
+    console.log('getIncomes - Transformed data:', transformed.length, 'items');
+    return transformed;
   } catch (error) {
-    console.error('Error in getIncomes:', error);
+    console.error('❌ Error in getIncomes:', error);
+    console.error('Error stack:', error.stack);
     return [];
   }
 };
@@ -151,7 +166,12 @@ export const deleteIncome = async (id, email = null) => {
 export const getExpenses = async (email = null) => {
   try {
     const userId = await getCurrentUserId();
-    if (!userId) return [];
+    console.log('getExpenses - userId:', userId);
+    
+    if (!userId) {
+      console.warn('⚠️ getExpenses: No userId, returning empty array');
+      return [];
+    }
 
     const { data, error } = await supabase
       .from('expenses')
@@ -160,11 +180,17 @@ export const getExpenses = async (email = null) => {
       .order('date', { ascending: false });
 
     if (error) {
-      console.error('Error fetching expenses:', error);
+      console.error('❌ Error fetching expenses:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return [];
     }
 
-    return (data || []).map(item => ({
+    console.log('getExpenses - Raw data from Supabase:', data?.length || 0, 'items');
+    if (data && data.length > 0) {
+      console.log('getExpenses - Sample item:', data[0]);
+    }
+
+    const transformed = (data || []).map(item => ({
       id: item.id,
       name: item.description || item.category || '',
       amount: parseFloat(item.amount),
@@ -172,8 +198,12 @@ export const getExpenses = async (email = null) => {
       description: item.description || '',
       date: item.date,
     }));
+    
+    console.log('getExpenses - Transformed data:', transformed.length, 'items');
+    return transformed;
   } catch (error) {
-    console.error('Error in getExpenses:', error);
+    console.error('❌ Error in getExpenses:', error);
+    console.error('Error stack:', error.stack);
     return [];
   }
 };
@@ -875,16 +905,33 @@ export const getTotals = async (email = null) => {
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   
+  console.log('getTotals - Filtering for month:', currentMonth + 1, 'year:', currentYear);
+  console.log('getTotals - Total incomes before filter:', incomes.length);
+  console.log('getTotals - Total expenses before filter:', expenses.length);
+  
   // Filter current month data
   const monthlyIncomes = incomes.filter(inc => {
+    if (!inc.date) return false;
     const incDate = new Date(inc.date);
-    return incDate.getMonth() === currentMonth && incDate.getFullYear() === currentYear;
+    const matches = incDate.getMonth() === currentMonth && incDate.getFullYear() === currentYear;
+    if (!matches && incomes.length > 0) {
+      console.log('Income not in current month:', inc.date, 'vs', `${currentYear}-${currentMonth + 1}`);
+    }
+    return matches;
   });
   
   const monthlyExpenses = expenses.filter(exp => {
+    if (!exp.date) return false;
     const expDate = new Date(exp.date);
-    return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+    const matches = expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
+    if (!matches && expenses.length > 0) {
+      console.log('Expense not in current month:', exp.date, 'vs', `${currentYear}-${currentMonth + 1}`);
+    }
+    return matches;
   });
+  
+  console.log('getTotals - Monthly incomes after filter:', monthlyIncomes.length);
+  console.log('getTotals - Monthly expenses after filter:', monthlyExpenses.length);
   
   const totalIncome = monthlyIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
   const totalExpenses = monthlyExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
