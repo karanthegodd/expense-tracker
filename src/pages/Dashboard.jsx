@@ -22,8 +22,15 @@ const Dashboard = () => {
     upcomingExpenses: [],
     avgBudgetProgress: 0,
     totalUpcoming: 0,
+    allIncomes: [],
+    allExpenses: [],
   });
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    // Default to current month in format YYYY-MM
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   const loadData = async () => {
     try {
@@ -43,7 +50,12 @@ const Dashboard = () => {
       console.log('Dashboard: Fetching totals...');
       const totals = await getTotals();
       console.log('Dashboard: Totals received:', totals);
-      setData(totals);
+      // Store all incomes and expenses for month filtering
+      setData({
+        ...totals,
+        allIncomes: totals.monthlyIncomes || [],
+        allExpenses: totals.monthlyExpenses || [],
+      });
     } catch (error) {
       console.error('❌ Error loading dashboard data:', error);
       console.error('Error stack:', error.stack);
@@ -106,21 +118,30 @@ const Dashboard = () => {
     }).format(amount);
   };
 
-  // Prepare daily data for line chart (current month) - with cumulative totals
+  // Prepare daily data for line chart (selected month) - with cumulative totals
   const getDailyData = () => {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const selectedDate = new Date(year, month - 1, 1);
+    const daysInMonth = new Date(year, month, 0).getDate();
     
     const dailyData = [];
-    const monthlyIncomes = data.monthlyIncomes || [];
-    const monthlyExpenses = data.monthlyExpenses || [];
+    // Filter incomes and expenses for selected month
+    const monthlyIncomes = (data.allIncomes || []).filter(inc => {
+      if (!inc.date) return false;
+      const incDate = new Date(inc.date);
+      return incDate.getMonth() === month - 1 && incDate.getFullYear() === year;
+    });
+    const monthlyExpenses = (data.allExpenses || []).filter(exp => {
+      if (!exp.date) return false;
+      const expDate = new Date(exp.date);
+      return expDate.getMonth() === month - 1 && expDate.getFullYear() === year;
+    });
     
     let cumulativeIncome = 0;
     let cumulativeExpenses = 0;
     
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day);
+      const date = new Date(year, month - 1, day);
       const dateStr = date.toISOString().split('T')[0];
       
       const dayIncome = monthlyIncomes
@@ -156,12 +177,16 @@ const Dashboard = () => {
 
   const pieColors = ['#FF6A00', '#00AEEF', '#002145', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#9C27B0'];
 
-  // Budget progress data
+  // Budget progress data (for selected month)
   const getBudgetProgressData = () => {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const [year, month] = selectedMonth.split('-').map(Number);
     const budgets = data.budgets || [];
-    const monthlyExpenses = data.monthlyExpenses || [];
+    // Filter expenses for selected month
+    const monthlyExpenses = (data.allExpenses || []).filter(exp => {
+      if (!exp.date) return false;
+      const expDate = new Date(exp.date);
+      return expDate.getMonth() === month - 1 && expDate.getFullYear() === year;
+    });
     
     return budgets.map(budget => {
       const spent = monthlyExpenses
@@ -240,7 +265,20 @@ const Dashboard = () => {
           </h1>
           <p className="text-white/80 text-sm">Overview of your financial health</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2">
+            <label htmlFor="month-select" className="text-white/80 text-sm font-medium">
+              View Month:
+            </label>
+            <input
+              id="month-select"
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="input-glass px-3 py-2 text-sm"
+              max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`}
+            />
+          </div>
           <Button 
             variant="secondary" 
             onClick={async () => {
@@ -348,7 +386,10 @@ const Dashboard = () => {
 
       {/* Charts Row 1: Line Chart and Pie Chart */}
       <div className="grid md:grid-cols-2 gap-4 mb-6">
-        <ChartContainer title="Monthly Income vs Expenses" icon="📈">
+        <ChartContainer 
+          title={`Income vs Expenses - ${new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`} 
+          icon="📈"
+        >
           <ResponsiveContainer width="100%" height={350}>
             <LineChart data={dailyData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />

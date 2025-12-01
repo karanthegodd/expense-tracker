@@ -901,6 +901,10 @@ export const getTotals = async (email = null) => {
       savingsGoalsCount: savingsGoals.length,
       upcomingExpensesCount: upcomingExpenses.length
     });
+    
+    // Store all incomes and expenses for month filtering
+    const allIncomes = incomes;
+    const allExpenses = expenses;
   
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
@@ -979,6 +983,8 @@ export const getTotals = async (email = null) => {
     recentTransactions: allTransactions,
     monthlyIncomes,
     monthlyExpenses,
+    allIncomes,
+    allExpenses,
     budgets,
     savingsGoals,
     upcomingExpenses,
