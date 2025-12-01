@@ -9,6 +9,7 @@ import Modal from '../components/Modal';
 import { useToast } from '../components/ToastContainer';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
 import { isAuthenticated } from '../utils/auth';
+import { formatDateEST } from '../utils/dateUtils';
 
 const FinancialPlanning = () => {
   const { showToast } = useToast();
@@ -1179,7 +1180,7 @@ const FinancialPlanning = () => {
                         {budget.startDate && (
                           <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-400/20">
                             <p className="text-xs text-blue-300/80">
-                              📅 Starts: {new Date(budget.startDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                              📅 Starts: {formatDateEST(budget.startDate, { year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                             <p className="text-xs text-blue-300/60 mt-1">
                               Only expenses from this date onwards are counted.
@@ -1195,7 +1196,7 @@ const FinancialPlanning = () => {
                             <p className={`text-xs ${
                               expired ? 'text-red-300/80' : 'text-orange-300/80'
                             }`}>
-                              📅 {expired ? 'Expired on' : 'Expires'}: {new Date(budget.expirationDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                              📅 {expired ? 'Expired on' : 'Expires'}: {formatDateEST(budget.expirationDate, { year: 'numeric', month: 'long', day: 'numeric' })}
                             </p>
                             {expired && (
                               <p className="text-xs text-red-300/60 mt-1">
@@ -1317,7 +1318,7 @@ const FinancialPlanning = () => {
                     {goal.dueDate && (
                       <div className="px-4 py-2 bg-blue-500/20 rounded-lg border border-blue-400/30">
                         <p className="text-xs text-blue-300/80">
-                          📅 Due: {new Date(goal.dueDate).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                          📅 Due: {formatDateEST(goal.dueDate, { year: 'numeric', month: 'long', day: 'numeric' })}
                       </p>
                       </div>
                     )}

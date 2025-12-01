@@ -4,6 +4,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import { useToast } from '../components/ToastContainer';
+import { getTodayDateEST, formatDateEST, normalizeDateStringEST } from '../utils/dateUtils';
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
@@ -15,37 +16,9 @@ const Expenses = () => {
   const [filterCategory, setFilterCategory] = useState('');
   const [sortBy, setSortBy] = useState('date-desc');
   const { showToast } = useToast();
-  // Helper function to get today's date in YYYY-MM-DD format (local timezone)
-  const getTodayDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // Helper to normalize date string to YYYY-MM-DD in local timezone
-  // Prevents timezone issues when dates are parsed
-  const normalizeDateString = (dateString) => {
-    if (!dateString) return getTodayDate();
-    // If already in YYYY-MM-DD format, return as-is
-    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      return dateString;
-    }
-    // Parse in local timezone and convert back to string
-    const parts = dateString.split('-');
-    if (parts.length === 3) {
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      const date = new Date(year, month, day);
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-    return getTodayDate();
-  };
+  // Use EST timezone helpers
+  const getTodayDate = getTodayDateEST;
+  const normalizeDateString = normalizeDateStringEST;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -469,7 +442,7 @@ const Expenses = () => {
                       style={{ animationDelay: `${0.05 * index}s` }}
                     >
                       <td className="py-4 px-4 text-white/80">
-                        {new Date(expense.date).toLocaleDateString('en-CA')}
+                        {formatDateEST(expense.date)}
                       </td>
                       <td className="py-4 px-4 font-semibold text-white">{expense.name}</td>
                       <td className="py-4 px-4">
@@ -528,7 +501,7 @@ const Expenses = () => {
                     <div className="flex-1">
                       <h3 className="font-bold text-white text-lg mb-1">{expense.name}</h3>
                       <p className="text-white/60 text-sm mb-1">
-                        {new Date(expense.date).toLocaleDateString('en-CA')}
+                        {formatDateEST(expense.date)}
                       </p>
                       {parseFloat(expense.amount) < 0 && (
                         <span className="px-2 py-0.5 bg-green-500/20 text-green-300 rounded text-xs font-semibold">

@@ -6,6 +6,7 @@ import Modal from '../components/Modal';
 import ChartContainer from '../components/ChartContainer';
 import { useToast } from '../components/ToastContainer';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { formatDateEST } from '../utils/dateUtils';
 
 const UpcomingExpenses = () => {
   const [expenses, setExpenses] = useState([]);
@@ -125,7 +126,7 @@ const UpcomingExpenses = () => {
     
     for (let i = 0; i < 6; i++) {
       const monthDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      const monthName = monthDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      const monthName = formatDateEST(monthDate, { month: 'short', year: 'numeric' });
       
       const monthExpenses = expenses.filter(exp => {
         const expDate = new Date(exp.dueDate);
@@ -291,7 +292,7 @@ const UpcomingExpenses = () => {
                     <h3 className="text-xl font-bold text-white mb-2">{expense.name}</h3>
                     <div className="flex items-center space-x-4 text-sm text-white/80">
                       <span>Amount: <span className="font-bold text-white">{formatCurrency(parseFloat(expense.amount))}</span></span>
-                      <span>Due: <span className="font-bold text-white">{new Date(expense.dueDate).toLocaleDateString()}</span></span>
+                      <span>Due: <span className="font-bold text-white">{formatDateEST(expense.dueDate)}</span></span>
                     </div>
                   </div>
                   <div className="flex space-x-2">

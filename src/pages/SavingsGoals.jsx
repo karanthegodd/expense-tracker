@@ -3,6 +3,7 @@ import { getSavingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal, 
 import Card from '../components/Card';
 import Button from '../components/Button';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
+import { formatDateEST } from '../utils/dateUtils';
 
 const SavingsGoals = () => {
   const [goals, setGoals] = useState([]);
@@ -326,7 +327,7 @@ const SavingsGoals = () => {
                   </p>
                   {goal.dueDate && (
                     <p className="text-white/60 text-xs mt-2">
-                      Due: {new Date(goal.dueDate).toLocaleDateString()}
+                      Due: {formatDateEST(goal.dueDate)}
                     </p>
                   )}
                 </div>

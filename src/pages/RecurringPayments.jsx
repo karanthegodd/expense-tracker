@@ -4,6 +4,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import { useToast } from '../components/ToastContainer';
+import { formatDateEST } from '../utils/dateUtils';
 
 const RecurringPayments = () => {
   const [payments, setPayments] = useState([]);
@@ -449,7 +450,7 @@ const RecurringPayments = () => {
                       </div>
                       <div>
                         <p className="text-white/60 mb-1">Next Due</p>
-                        <p className="text-white font-semibold">{new Date(payment.nextDueDate).toLocaleDateString()}</p>
+                        <p className="text-white font-semibold">{formatDateEST(payment.nextDueDate)}</p>
                       </div>
                     </div>
                   </div>

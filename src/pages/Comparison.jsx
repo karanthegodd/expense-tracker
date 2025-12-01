@@ -3,6 +3,7 @@ import { getIncomes, getExpenses } from '../utils/database';
 import Card from '../components/Card';
 import ChartContainer from '../components/ChartContainer';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { formatDateEST } from '../utils/dateUtils';
 
 const Comparison = () => {
   const [comparisonType, setComparisonType] = useState('months'); // 'months', 'years', 'days'
@@ -181,10 +182,10 @@ const Comparison = () => {
     } else if (comparisonType === 'months') {
       const [year, month] = period.split('-').map(Number);
       const date = new Date(year, month - 1, 1);
-      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      return formatDateEST(date, { month: 'long', year: 'numeric' });
     } else {
       const date = new Date(period);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return formatDateEST(date, { month: 'short', day: 'numeric', year: 'numeric' });
     }
   };
 

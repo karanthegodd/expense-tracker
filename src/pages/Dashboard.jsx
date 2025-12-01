@@ -5,6 +5,7 @@ import ChartContainer from '../components/ChartContainer';
 import Button from '../components/Button';
 import { isAuthenticated } from '../utils/auth';
 import { manualRefreshSession } from '../utils/sessionKeepAlive';
+import { formatDateEST } from '../utils/dateUtils';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, PieChart, Pie, Cell, RadialBarChart, RadialBar 
@@ -419,7 +420,7 @@ const Dashboard = () => {
     
     for (let i = 0; i < 6; i++) {
       const monthDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      const monthName = monthDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      const monthName = formatDateEST(monthDate, { month: 'short', year: 'numeric' });
       
       const monthExpenses = upcomingExpenses.filter(exp => {
         const expDate = new Date(exp.dueDate);
@@ -465,7 +466,16 @@ const Dashboard = () => {
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
               className="input-glass px-3 py-2 text-sm"
-              max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`}
+              max={`${(() => {
+                const now = new Date();
+                const estDateStr = now.toLocaleString('en-US', { 
+                  timeZone: 'America/New_York',
+                  year: 'numeric',
+                  month: '2-digit'
+                });
+                const [month, , year] = estDateStr.split('/');
+                return `${year}-${month}`;
+              })()}`}
             />
           </div>
           <Button 
@@ -653,7 +663,7 @@ const Dashboard = () => {
           title={`Income vs Expenses - ${(() => {
             const [year, month] = selectedMonth.split('-').map(Number);
             const date = new Date(year, month - 1, 1);
-            return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            return formatDateEST(date, { month: 'long', year: 'numeric' });
           })()}`} 
           icon="📈"
         >
@@ -869,7 +879,7 @@ const Dashboard = () => {
                   </p>
                   {goal.dueDate && (
                     <p className="text-xs text-white/60 mt-1">
-                      Due: {new Date(goal.dueDate).toLocaleDateString()}
+                      Due: {formatDateEST(goal.dueDate)}
                     </p>
                   )}
                 </div>
@@ -1004,7 +1014,7 @@ const Dashboard = () => {
                     style={{ animationDelay: `${0.05 * index}s` }}
                   >
                     <td className="py-4 px-4 text-white/80">
-                      {new Date(transaction.date).toLocaleDateString()}
+                      {formatDateEST(transaction.date)}
                     </td>
                     <td className="py-4 px-4">
                       <span
