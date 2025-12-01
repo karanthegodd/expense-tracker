@@ -11,6 +11,7 @@ import FinancialPlanning from './pages/FinancialPlanning';
 import UpcomingExpenses from './pages/UpcomingExpenses';
 import RecurringPayments from './pages/RecurringPayments';
 import Settings from './pages/Settings';
+import Comparison from './pages/Comparison';
 import { isAuthenticated } from './utils/auth';
 import { supabase } from './utils/supabase';
 import { startSessionKeepAlive, stopSessionKeepAlive } from './utils/sessionKeepAlive';
@@ -171,6 +172,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Settings />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/comparison"
+            element={
+              <PrivateRoute>
+                <Comparison />
               </PrivateRoute>
             }
           />

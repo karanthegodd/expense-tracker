@@ -63,6 +63,7 @@ const Navbar = () => {
     { path: '/income', label: 'Income', icon: '💰', color: 'green-400' },
     { path: '/expenses', label: 'Expenses', icon: '💸', color: 'red-400' },
     { path: '/budgets', label: 'Financial Planning', icon: '💰', color: 'light-blue' },
+    { path: '/comparison', label: 'Comparison', icon: '📊', color: 'blue-400' },
     { path: '/upcoming-expenses', label: 'Upcoming', icon: '📅', color: 'purple-400' },
     { path: '/recurring-payments', label: 'Recurring', icon: '🔄', color: 'pink-400' },
     { path: '/settings', label: 'Settings', icon: '⚙️', color: 'gray-400' },
