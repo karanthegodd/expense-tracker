@@ -276,23 +276,27 @@ const Dashboard = () => {
         // Calculate cumulative spending from budget start date to expiration (or current date)
         // Budgets always show cumulative spending, not filtered by selected month
         // Start date: use startDate if set, otherwise use createdAt
+        // This must match FinancialPlanning.jsx getSpentAmount logic exactly
         let startDate = null;
         if (budget.startDate) {
           startDate = parseLocalDate(budget.startDate);
-          if (startDate) startDate.setHours(0, 0, 0, 0);
+          if (startDate) {
+            startDate.setHours(0, 0, 0, 0); // Start of start date
+          }
         } else if (budget.createdAt) {
           startDate = new Date(budget.createdAt);
-          startDate.setHours(0, 0, 0, 0);
+          startDate.setHours(0, 0, 0, 0); // Start of creation day
         }
         
         // End date: expiration date if set and passed, otherwise use current date (never expires)
+        // This must match FinancialPlanning.jsx getSpentAmount logic exactly
         let endDate = new Date();
         endDate.setHours(23, 59, 59, 999); // End of today
         
         if (budget.expirationDate) {
           const expirationDate = parseLocalDate(budget.expirationDate);
           if (expirationDate) {
-            expirationDate.setHours(23, 59, 59, 999);
+            expirationDate.setHours(23, 59, 59, 999); // End of expiration day
             // Use the earlier of: expiration date or current date
             if (expirationDate < endDate) {
               endDate = expirationDate;
@@ -312,21 +316,22 @@ const Dashboard = () => {
         console.log(`📊 Budget "${budget.category}": Found ${categoryExpenses.length} expenses in category`);
         
         // Then filter by date range and calculate spent
+        // IMPORTANT: This logic must match FinancialPlanning.jsx getSpentAmount exactly
         const spent = categoryExpenses
           .filter(exp => {
-            if (!exp.date) {
+            if (!exp || !exp.date) {
               console.warn('⚠️ Expense missing date:', exp);
               return false;
             }
             
-            const expDate = parseLocalDate(exp.date);
-            if (!expDate) {
+            // Use same date parsing as FinancialPlanning.jsx
+            const expDate = new Date(exp.date);
+            if (isNaN(expDate.getTime())) {
               if (budget.category === 'Shopping') {
                 console.log('❌ Could not parse expense date:', exp.date);
               }
               return false;
             }
-            expDate.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
             
             // Only count expenses within the budget's active period (from creation to expiration/now)
             if (startDate) {
@@ -355,9 +360,9 @@ const Dashboard = () => {
             return true;
           })
           .reduce((sum, exp) => {
+            // Match FinancialPlanning.jsx: use actual amount (negative = refunds reduce total)
+            // But for display purposes, we want to show total spending, so use absolute value
             const amount = parseFloat(exp.amount || 0);
-            // Use absolute value for budget spending - we want total amount spent
-            // Negative amounts (refunds) reduce the spent total
             return sum + Math.abs(amount);
           }, 0);
         
