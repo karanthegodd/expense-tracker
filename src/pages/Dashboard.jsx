@@ -348,9 +348,32 @@ const Dashboard = () => {
         </Card>
       )}
 
-      {/* KPI Cards - Show selected month totals */}
+      {/* KPI Cards - Show selected month totals with carryforward */}
       {(() => {
         const [year, month] = selectedMonth.split('-').map(Number);
+        const selectedDate = new Date(year, month - 1, 1);
+        
+        // Get all incomes and expenses up to and including the selected month
+        const incomesUpToMonth = (data.allIncomes || []).filter(inc => {
+          if (!inc.date) return false;
+          const incDate = new Date(inc.date);
+          const incMonth = new Date(incDate.getFullYear(), incDate.getMonth(), 1);
+          return incMonth <= selectedDate;
+        });
+        
+        const expensesUpToMonth = (data.allExpenses || []).filter(exp => {
+          if (!exp.date) return false;
+          const expDate = new Date(exp.date);
+          const expMonth = new Date(expDate.getFullYear(), expDate.getMonth(), 1);
+          return expMonth <= selectedDate;
+        });
+        
+        // Calculate cumulative savings up to selected month
+        const cumulativeIncome = incomesUpToMonth.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+        const cumulativeExpenses = expensesUpToMonth.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        const cumulativeSaved = cumulativeIncome - cumulativeExpenses;
+        
+        // Get just the selected month's data
         const monthlyIncomes = (data.allIncomes || []).filter(inc => {
           if (!inc.date) return false;
           const incDate = new Date(inc.date);
@@ -364,6 +387,24 @@ const Dashboard = () => {
         const monthIncome = monthlyIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
         const monthExpenses = monthlyExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
         const monthSaved = monthIncome - monthExpenses;
+        
+        // Calculate previous month's savings (carryforward)
+        const previousMonth = new Date(year, month - 2, 1);
+        const previousIncomes = (data.allIncomes || []).filter(inc => {
+          if (!inc.date) return false;
+          const incDate = new Date(inc.date);
+          const incMonth = new Date(incDate.getFullYear(), incDate.getMonth(), 1);
+          return incMonth < selectedDate;
+        });
+        const previousExpenses = (data.allExpenses || []).filter(exp => {
+          if (!exp.date) return false;
+          const expDate = new Date(exp.date);
+          const expMonth = new Date(expDate.getFullYear(), expDate.getMonth(), 1);
+          return expMonth < selectedDate;
+        });
+        const previousSaved = previousIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0) - 
+                             previousExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        
         const monthBudgetProgress = budgetProgressData.length > 0 
           ? budgetProgressData.reduce((sum, b) => sum + b.percentage, 0) / budgetProgressData.length 
           : 0;
@@ -394,15 +435,17 @@ const Dashboard = () => {
 
             <div className="kpi-card slide-up" style={{ animationDelay: '0.3s' }}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Monthly Saved</h3>
+                <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Cumulative Saved</h3>
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                  <span className="text-lg">{monthSaved >= 0 ? '✅' : '⚠️'}</span>
+                  <span className="text-lg">{cumulativeSaved >= 0 ? '✅' : '⚠️'}</span>
                 </div>
               </div>
-              <p className={`text-2xl font-bold ${monthSaved >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                {formatCurrency(monthSaved)}
+              <p className={`text-2xl font-bold ${cumulativeSaved >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                {formatCurrency(cumulativeSaved)}
               </p>
-              <p className="text-xs text-white/60 mt-1">All-time: {formatCurrency(data.totalSaved)}</p>
+              <p className="text-xs text-white/60 mt-1">
+                This month: {formatCurrency(monthSaved)} {previousSaved > 0 && `(Carried forward: ${formatCurrency(previousSaved)})`}
+              </p>
             </div>
 
             <div className="kpi-card slide-up" style={{ animationDelay: '0.4s' }}>
