@@ -106,10 +106,13 @@ const FinancialPlanning = () => {
 
   const loadBudgets = async () => {
     try {
+      console.log('🔄 Loading budgets...');
       const data = await getBudgets();
+      console.log('📊 Loaded budgets:', data);
       setBudgets(data || []);
+      console.log('✅ Budgets state updated, count:', (data || []).length);
     } catch (error) {
-      console.error('Error loading budgets:', error);
+      console.error('❌ Error loading budgets:', error);
       setBudgets([]);
     }
   };
@@ -171,16 +174,18 @@ const FinancialPlanning = () => {
     }
     
     try {
-      // Normalize date fields: convert empty strings to null
+      // Normalize date fields: convert empty strings to null and normalize dates
       const normalizedBudgetData = {
         ...budgetFormData,
         startDate: budgetFormData.startDate && budgetFormData.startDate.trim() !== '' 
-          ? budgetFormData.startDate 
+          ? normalizeDateStringEST(budgetFormData.startDate) 
           : null,
         expirationDate: budgetFormData.expirationDate && budgetFormData.expirationDate.trim() !== '' 
-          ? budgetFormData.expirationDate 
+          ? normalizeDateStringEST(budgetFormData.expirationDate) 
           : null,
       };
+      
+      console.log('📝 Submitting budget:', { editingBudgetId, normalizedBudgetData });
       
       if (editingBudgetId) {
         console.log('🔄 Updating budget:', editingBudgetId, normalizedBudgetData);
@@ -192,29 +197,37 @@ const FinancialPlanning = () => {
           // Refresh expenses to recalculate spent amounts
           const expensesData = await getExpenses();
           setExpenses(expensesData || []);
+          // Force refresh budgets
           await loadBudgets();
+          console.log('✅ Budgets refreshed after update');
         } else {
           // Check console for detailed error - it's already logged there
           showToast('Failed to update budget. Check console for details.', 'error');
         }
       } else {
+        console.log('➕ Adding new budget:', normalizedBudgetData);
         const result = await addBudget(normalizedBudgetData);
+        console.log('📊 Add result:', result);
         if (result) {
           showToast('Budget added', 'success');
           resetBudgetForm();
           // Refresh expenses to recalculate spent amounts
           const expensesData = await getExpenses();
           setExpenses(expensesData || []);
+          // Force refresh budgets - wait a bit to ensure DB is updated
+          await new Promise(resolve => setTimeout(resolve, 100));
           await loadBudgets();
+          console.log('✅ Budgets refreshed after add, current budgets:', budgets.length);
         } else {
-          showToast('Failed to add budget', 'error');
+          console.error('❌ addBudget returned null - check console for errors');
+          showToast('Failed to add budget. Check console for details.', 'error');
         }
       }
     } catch (error) {
       console.error('❌ Error in handleBudgetSubmit:', error);
       console.error('Error details:', error.message, error.stack);
       const errorMessage = error.message || 'Please try again.';
-      showToast(`Failed to update budget: ${errorMessage}`, 'error');
+      showToast(`Failed to save budget: ${errorMessage}`, 'error');
     }
   };
 
