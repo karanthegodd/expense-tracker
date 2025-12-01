@@ -76,7 +76,7 @@ const Navbar = () => {
       <nav className="glass-card sticky top-0 z-50 mb-6 mx-2 sm:mx-4 mt-2 sm:mt-4 shadow-xl backdrop-blur-xl" style={{ position: 'relative', zIndex: 100 }}>
         <div className="container mx-auto px-2 sm:px-3 md:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-lg sm:text-xl md:text-2xl font-bold text-white hover:scale-105 transition-transform duration-300 active:scale-95 -ml-1 sm:-ml-2">
+            <Link to="/" className="text-lg sm:text-xl md:text-2xl font-bold text-white hover:scale-105 transition-transform duration-300 active:scale-95 -ml-2 sm:-ml-3 md:-ml-4">
               <span className="flex items-center space-x-2">
                 <span className="text-xl sm:text-2xl">📊</span>
                 <span className="hidden sm:inline">Ontario Tech <span className="text-orange">ExpenseTrack</span></span>
