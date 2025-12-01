@@ -348,60 +348,85 @@ const Dashboard = () => {
         </Card>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div className="kpi-card slide-up" style={{ animationDelay: '0.1s' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Total Income</h3>
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <span className="text-lg">💰</span>
+      {/* KPI Cards - Show selected month totals */}
+      {(() => {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const monthlyIncomes = (data.allIncomes || []).filter(inc => {
+          if (!inc.date) return false;
+          const incDate = new Date(inc.date);
+          return incDate.getMonth() === month - 1 && incDate.getFullYear() === year;
+        });
+        const monthlyExpenses = (data.allExpenses || []).filter(exp => {
+          if (!exp.date) return false;
+          const expDate = new Date(exp.date);
+          return expDate.getMonth() === month - 1 && expDate.getFullYear() === year;
+        });
+        const monthIncome = monthlyIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+        const monthExpenses = monthlyExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+        const monthSaved = monthIncome - monthExpenses;
+        const monthBudgetProgress = budgetProgressData.length > 0 
+          ? budgetProgressData.reduce((sum, b) => sum + b.percentage, 0) / budgetProgressData.length 
+          : 0;
+        
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <div className="kpi-card slide-up" style={{ animationDelay: '0.1s' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Monthly Income</h3>
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-lg">💰</span>
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{formatCurrency(monthIncome)}</p>
+              <p className="text-xs text-white/60 mt-1">All-time: {formatCurrency(data.totalIncome)}</p>
             </div>
-          </div>
-          <p className="text-2xl font-bold">{formatCurrency(data.totalIncome)}</p>
-        </div>
 
-        <div className="kpi-card slide-up" style={{ animationDelay: '0.2s' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Total Expenses</h3>
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <span className="text-lg">💸</span>
+            <div className="kpi-card slide-up" style={{ animationDelay: '0.2s' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Monthly Expenses</h3>
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-lg">💸</span>
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{formatCurrency(monthExpenses)}</p>
+              <p className="text-xs text-white/60 mt-1">All-time: {formatCurrency(data.totalExpenses)}</p>
             </div>
-          </div>
-          <p className="text-2xl font-bold">{formatCurrency(data.totalExpenses)}</p>
-        </div>
 
-        <div className="kpi-card slide-up" style={{ animationDelay: '0.3s' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Total Saved</h3>
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <span className="text-lg">{data.totalSaved >= 0 ? '✅' : '⚠️'}</span>
+            <div className="kpi-card slide-up" style={{ animationDelay: '0.3s' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Monthly Saved</h3>
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-lg">{monthSaved >= 0 ? '✅' : '⚠️'}</span>
+                </div>
+              </div>
+              <p className={`text-2xl font-bold ${monthSaved >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                {formatCurrency(monthSaved)}
+              </p>
+              <p className="text-xs text-white/60 mt-1">All-time: {formatCurrency(data.totalSaved)}</p>
             </div>
-          </div>
-          <p className={`text-2xl font-bold ${data.totalSaved >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-            {formatCurrency(data.totalSaved)}
-          </p>
-        </div>
 
-        <div className="kpi-card slide-up" style={{ animationDelay: '0.4s' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Budget Progress</h3>
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <span className="text-lg">📊</span>
+            <div className="kpi-card slide-up" style={{ animationDelay: '0.4s' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Budget Progress</h3>
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-lg">📊</span>
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{monthBudgetProgress.toFixed(0)}%</p>
             </div>
-          </div>
-          <p className="text-2xl font-bold">{data.avgBudgetProgress.toFixed(0)}%</p>
-        </div>
 
-        <div className="kpi-card slide-up" style={{ animationDelay: '0.5s' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Upcoming</h3>
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <span className="text-lg">📅</span>
+            <div className="kpi-card slide-up" style={{ animationDelay: '0.5s' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Upcoming</h3>
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-lg">📅</span>
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{formatCurrency(data.totalUpcoming)}</p>
             </div>
           </div>
-          <p className="text-2xl font-bold">{formatCurrency(data.totalUpcoming)}</p>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Charts Row 1: Line Chart and Pie Chart */}
       <div className="grid md:grid-cols-2 gap-4 mb-6">
