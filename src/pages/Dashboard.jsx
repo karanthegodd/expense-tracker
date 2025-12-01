@@ -197,12 +197,12 @@ const Dashboard = () => {
           }
           return matches;
         })
-        .reduce((sum, exp) => {
-          const amount = parseFloat(exp.amount || 0);
-          // For chart display, we want cumulative total expenses (positive amounts)
-          // Negative amounts (refunds) reduce the total, but we show absolute value
-          return sum + Math.abs(amount);
-        }, 0);
+          .reduce((sum, exp) => {
+            const amount = parseFloat(exp.amount || 0);
+            // For chart display, use absolute value to show total spending
+            // Refunds (negative) reduce the cumulative total
+            return sum + Math.abs(amount);
+          }, 0);
       
       // Add to cumulative totals
       cumulativeIncome += dayIncome;
@@ -240,9 +240,9 @@ const Dashboard = () => {
     });
     
     return Object.entries(categoryBreakdown).map(([category, amount]) => ({
-      category,
-      amount: parseFloat(amount.toFixed(2)),
-    }));
+    category,
+    amount: parseFloat(amount.toFixed(2)),
+  }));
   };
 
   const categoryData = getCategoryData();
@@ -320,29 +320,39 @@ const Dashboard = () => {
             }
             
             const expDate = parseLocalDate(exp.date);
-            if (!expDate) return false;
+            if (!expDate) {
+              if (budget.category === 'Shopping') {
+                console.log('❌ Could not parse expense date:', exp.date);
+              }
+              return false;
+            }
             expDate.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
             
             // Only count expenses within the budget's active period (from creation to expiration/now)
             if (startDate && expDate < startDate) {
               if (budget.category === 'Shopping') {
-                console.log('❌ Expense before startDate:', exp.date, 'startDate:', startDate);
+                console.log('❌ Expense before startDate:', exp.date, 'startDate:', startDate.toISOString().split('T')[0]);
               }
               return false;
             }
             if (expDate > endDate) {
               if (budget.category === 'Shopping') {
-                console.log('❌ Expense after endDate:', exp.date, 'endDate:', endDate);
+                console.log('❌ Expense after endDate:', exp.date, 'endDate:', endDate.toISOString().split('T')[0]);
               }
               return false;
             }
             
             if (budget.category === 'Shopping') {
-              console.log('✅ Counting expense:', exp.date, 'amount:', exp.amount);
+              console.log('✅ Counting expense:', exp.date, 'amount:', exp.amount, 'name:', exp.name);
             }
             return true;
           })
-          .reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+          .reduce((sum, exp) => {
+            const amount = parseFloat(exp.amount || 0);
+            // Use absolute value for budget spending - we want total amount spent
+            // Negative amounts (refunds) reduce the spent total, so subtract them
+            return sum + Math.abs(amount);
+          }, 0);
         
         // Debug logging for Shopping budget
         if (budget.category === 'Shopping') {
@@ -359,22 +369,22 @@ const Dashboard = () => {
             remaining: parseFloat(budget.amount) - spent
           });
         }
-        
-        const percentage = (spent / parseFloat(budget.amount || 1)) * 100;
-        
-        let color = '#4CAF50'; // Green
-        if (percentage > 90) color = '#FF3B30'; // Red
-        else if (percentage > 50) color = '#FFB300'; // Orange
-        
-        return {
-          category: budget.category,
-          budget: parseFloat(budget.amount),
-          spent: spent,
-          remaining: parseFloat(budget.amount) - spent,
-          percentage: Math.min(percentage, 100),
-          color,
-        };
-      });
+      
+      const percentage = (spent / parseFloat(budget.amount || 1)) * 100;
+      
+      let color = '#4CAF50'; // Green
+      if (percentage > 90) color = '#FF3B30'; // Red
+      else if (percentage > 50) color = '#FFB300'; // Orange
+      
+      return {
+        category: budget.category,
+        budget: parseFloat(budget.amount),
+        spent: spent,
+        remaining: parseFloat(budget.amount) - spent,
+        percentage: Math.min(percentage, 100),
+        color,
+      };
+    });
   };
 
   const budgetProgressData = getBudgetProgressData();
@@ -456,8 +466,8 @@ const Dashboard = () => {
             }} 
             className="shadow-xl text-sm"
           >
-            🔄 Refresh Data
-          </Button>
+          🔄 Refresh Data
+        </Button>
         </div>
       </div>
 
@@ -574,45 +584,45 @@ const Dashboard = () => {
               </div>
               <p className="text-2xl font-bold">{formatCurrency(monthIncome)}</p>
               <p className="text-xs text-white/60 mt-1">All-time: {formatCurrency(data.totalIncome)}</p>
-            </div>
+        </div>
 
-            <div className="kpi-card slide-up" style={{ animationDelay: '0.2s' }}>
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Monthly Expenses</h3>
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                   <span className="text-lg">💸</span>
-                </div>
-              </div>
+            </div>
+          </div>
               <p className="text-2xl font-bold">{formatCurrency(monthExpenses)}</p>
               <p className="text-xs text-white/60 mt-1">All-time: {formatCurrency(data.totalExpenses)}</p>
-            </div>
+        </div>
 
-            <div className="kpi-card slide-up" style={{ animationDelay: '0.3s' }}>
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.3s' }}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Cumulative Saved</h3>
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                   <span className="text-lg">{cumulativeSaved >= 0 ? '✅' : '⚠️'}</span>
-                </div>
-              </div>
+            </div>
+          </div>
               <p className={`text-2xl font-bold ${cumulativeSaved >= 0 ? 'text-green-300' : 'text-red-300'}`}>
                 {formatCurrency(cumulativeSaved)}
               </p>
               <p className="text-xs text-white/60 mt-1">
                 This month: {formatCurrency(monthSaved)} {previousSaved > 0 && `(Carried forward: ${formatCurrency(previousSaved)})`}
-              </p>
-            </div>
+          </p>
+        </div>
 
-            <div className="kpi-card slide-up" style={{ animationDelay: '0.4s' }}>
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Budget Progress</h3>
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                   <span className="text-lg">📊</span>
-                </div>
-              </div>
-              <p className="text-2xl font-bold">{monthBudgetProgress.toFixed(0)}%</p>
             </div>
+          </div>
+              <p className="text-2xl font-bold">{monthBudgetProgress.toFixed(0)}%</p>
+        </div>
 
-            <div className="kpi-card slide-up" style={{ animationDelay: '0.5s' }}>
+        <div className="kpi-card slide-up" style={{ animationDelay: '0.5s' }}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold opacity-90 uppercase tracking-wide">Upcoming</h3>
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -635,45 +645,79 @@ const Dashboard = () => {
           })()}`} 
           icon="📈"
         >
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={dailyData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={dailyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <defs>
+                <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#00AEEF" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#00AEEF" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#FF6A00" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#FF6A00" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
               <XAxis 
                 dataKey="day" 
-                stroke="rgba(255,255,255,0.7)"
-                tick={{ fill: 'rgba(255,255,255,0.7)' }}
+                stroke="rgba(255,255,255,0.5)"
+                tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
+                tickLine={{ stroke: 'rgba(255,255,255,0.3)' }}
+                axisLine={{ stroke: 'rgba(255,255,255,0.3)' }}
               />
               <YAxis 
-                stroke="rgba(255,255,255,0.7)"
-                tick={{ fill: 'rgba(255,255,255,0.7)' }}
+                stroke="rgba(255,255,255,0.5)"
+                tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
+                tickLine={{ stroke: 'rgba(255,255,255,0.3)' }}
+                axisLine={{ stroke: 'rgba(255,255,255,0.3)' }}
+                tickFormatter={(value) => `$${value.toLocaleString()}`}
               />
               <Tooltip 
                 formatter={(value) => formatCurrency(value)}
                 contentStyle={{ 
-                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: 'white'
+                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '12px',
+                  color: 'white',
+                  padding: '12px 16px',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+                }}
+                labelStyle={{ 
+                  color: 'rgba(255,255,255,0.9)',
+                  marginBottom: '8px',
+                  fontWeight: '600'
+                }}
+                itemStyle={{ 
+                  color: 'white',
+                  padding: '4px 0'
                 }}
               />
               <Legend 
-                wrapperStyle={{ color: 'white' }}
+                wrapperStyle={{ color: 'white', paddingTop: '20px' }}
+                iconType="line"
+                formatter={(value) => <span style={{ color: 'white', fontSize: '14px' }}>{value}</span>}
               />
               <Line 
                 type="monotone" 
                 dataKey="income" 
                 stroke="#00AEEF" 
-                strokeWidth={3}
-                dot={{ fill: '#00AEEF', r: 4 }}
+                strokeWidth={4}
+                dot={{ fill: '#00AEEF', r: 5, strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }}
                 name="Income"
+                animationDuration={1000}
+                animationEasing="ease-out"
               />
               <Line 
                 type="monotone" 
                 dataKey="expenses" 
                 stroke="#FF6A00" 
-                strokeWidth={3}
-                dot={{ fill: '#FF6A00', r: 4 }}
+                strokeWidth={4}
+                dot={{ fill: '#FF6A00', r: 5, strokeWidth: 2, stroke: '#fff' }}
+                activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }}
                 name="Expenses"
+                animationDuration={1000}
+                animationEasing="ease-out"
               />
             </LineChart>
           </ResponsiveContainer>
@@ -681,25 +725,32 @@ const Dashboard = () => {
 
         <ChartContainer title="Expense by Category" icon="🥧">
           {categoryData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={400}>
               <PieChart>
                 <Pie
                   data={categoryData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={false}
-                  outerRadius={100}
+                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                  outerRadius={120}
+                  innerRadius={60}
                   fill="#8884d8"
                   dataKey="amount"
                   animationBegin={0}
-                  animationDuration={800}
+                  animationDuration={1000}
+                  paddingAngle={2}
                 >
                   {categoryData.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
                       fill={pieColors[index % pieColors.length]}
-                      style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+                      style={{ 
+                        filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                        transition: 'all 0.3s ease'
+                      }}
+                      stroke="rgba(255,255,255,0.1)"
+                      strokeWidth={2}
                     />
                   ))}
                 </Pie>
@@ -713,21 +764,21 @@ const Dashboard = () => {
                     ];
                   }}
                   contentStyle={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: '2px solid rgba(0, 33, 69, 0.3)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
                     borderRadius: '12px',
-                    color: '#002145',
+                    color: 'white',
                     padding: '12px 16px',
                     fontSize: '14px',
                     fontWeight: '600',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
                   }}
                   itemStyle={{ 
-                    color: '#002145',
+                    color: 'white',
                     padding: '4px 0'
                   }}
                   labelStyle={{ 
-                    color: '#002145',
+                    color: 'rgba(255,255,255,0.9)',
                     fontWeight: '700',
                     marginBottom: '8px',
                     fontSize: '15px'
@@ -739,8 +790,9 @@ const Dashboard = () => {
                     const percent = ((entry.payload.amount / total) * 100).toFixed(0);
                     return `${entry.payload.category}: ${percent}%`;
                   }}
-                  wrapperStyle={{ color: 'white', paddingTop: '20px' }}
+                  wrapperStyle={{ color: 'white', paddingTop: '20px', fontSize: '14px' }}
                   iconType="circle"
+                  iconSize={12}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -854,31 +906,86 @@ const Dashboard = () => {
             <span className="mr-2 text-lg">📅</span> Upcoming Expenses Forecast
           </h2>
           {forecastData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={forecastData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={forecastData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <defs>
+                  <linearGradient id="requiredGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FF3B30" stopOpacity={1}/>
+                    <stop offset="95%" stopColor="#FF3B30" stopOpacity={0.7}/>
+                  </linearGradient>
+                  <linearGradient id="savedGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4CAF50" stopOpacity={1}/>
+                    <stop offset="95%" stopColor="#4CAF50" stopOpacity={0.7}/>
+                  </linearGradient>
+                  <linearGradient id="deficitGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FFB300" stopOpacity={1}/>
+                    <stop offset="95%" stopColor="#FFB300" stopOpacity={0.7}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                 <XAxis 
                   dataKey="month" 
-                  stroke="rgba(255,255,255,0.7)"
+                  stroke="rgba(255,255,255,0.5)"
                   tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
+                  tickLine={{ stroke: 'rgba(255,255,255,0.3)' }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.3)' }}
                 />
                 <YAxis 
-                  stroke="rgba(255,255,255,0.7)"
-                  tick={{ fill: 'rgba(255,255,255,0.7)' }}
+                  stroke="rgba(255,255,255,0.5)"
+                  tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
+                  tickLine={{ stroke: 'rgba(255,255,255,0.3)' }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.3)' }}
+                  tickFormatter={(value) => `$${value.toLocaleString()}`}
                 />
                 <Tooltip 
                   formatter={(value) => formatCurrency(value)}
                   contentStyle={{ 
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: 'white'
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: '12px',
+                    color: 'white',
+                    padding: '12px 16px',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+                  }}
+                  labelStyle={{ 
+                    color: 'rgba(255,255,255,0.9)',
+                    marginBottom: '8px',
+                    fontWeight: '600'
+                  }}
+                  itemStyle={{ 
+                    color: 'white',
+                    padding: '4px 0'
                   }}
                 />
-                <Legend wrapperStyle={{ color: 'white' }} />
-                <Bar dataKey="required" fill="#FF3B30" name="Required" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="saved" fill="#4CAF50" name="Saved" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="deficit" fill="#FFB300" name="Deficit" radius={[8, 8, 0, 0]} />
+                <Legend 
+                  wrapperStyle={{ color: 'white', paddingTop: '20px', fontSize: '14px' }}
+                  iconType="square"
+                  iconSize={12}
+                />
+                <Bar 
+                  dataKey="required" 
+                  fill="url(#requiredGradient)" 
+                  name="Required" 
+                  radius={[8, 8, 0, 0]}
+                  animationDuration={1000}
+                  animationEasing="ease-out"
+                />
+                <Bar 
+                  dataKey="saved" 
+                  fill="url(#savedGradient)" 
+                  name="Saved" 
+                  radius={[8, 8, 0, 0]}
+                  animationDuration={1000}
+                  animationEasing="ease-out"
+                />
+                <Bar 
+                  dataKey="deficit" 
+                  fill="url(#deficitGradient)" 
+                  name="Deficit" 
+                  radius={[8, 8, 0, 0]}
+                  animationDuration={1000}
+                  animationEasing="ease-out"
+                />
               </BarChart>
             </ResponsiveContainer>
           ) : (
