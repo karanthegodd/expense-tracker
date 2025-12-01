@@ -1125,7 +1125,7 @@ const Dashboard = () => {
                           ];
                         }}
                         contentStyle={{ 
-                          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                          backgroundColor: 'rgba(0, 0, 0, 0.95)',
                           border: '1px solid rgba(255, 255, 255, 0.3)',
                           borderRadius: '12px',
                           color: 'white',
@@ -1133,6 +1133,18 @@ const Dashboard = () => {
                           fontSize: '14px',
                           fontWeight: '600',
                           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+                        }}
+                        labelStyle={{ 
+                          color: 'white',
+                          marginBottom: '8px',
+                          fontWeight: '700',
+                          fontSize: '15px'
+                        }}
+                        itemStyle={{ 
+                          color: 'white',
+                          padding: '4px 0',
+                          fontSize: '14px',
+                          fontWeight: '600'
                         }}
                       />
                     </PieChart>
