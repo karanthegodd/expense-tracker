@@ -97,7 +97,7 @@ function App() {
   return (
     <ToastProvider>
       <Router>
-        <div className="min-h-screen" style={{ position: 'relative', zIndex: 10, minHeight: '100vh' }}>
+        <div className="min-h-screen w-full" style={{ position: 'relative', zIndex: 10, minHeight: '100vh', width: '100%', margin: 0, padding: 0 }}>
           <Navbar />
           <Routes>
           <Route path="/" element={<Homepage />} />

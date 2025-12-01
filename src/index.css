@@ -7,8 +7,17 @@
     @apply transition-all duration-300;
   }
 
+  html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
   body {
     margin: 0;
+    padding: 0;
+    width: 100%;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
@@ -18,6 +27,7 @@
     background-attachment: fixed;
     min-height: 100vh;
     position: relative;
+    overflow-x: hidden;
   }
 
   body::before {
@@ -38,6 +48,10 @@
     position: relative;
     z-index: 10;
     min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
   }
 }
 
