@@ -1,38 +1,65 @@
 # Ontario Tech ExpenseTrack
 
-A fully functional expense tracking application built with React, Vite, and TailwindCSS. All data is stored locally in the browser using localStorage - no backend required!
+A fully functional expense tracking application built with React, Vite, TailwindCSS, and Supabase. Features secure user authentication and cloud-based data storage.
 
-## Features
+## 🌟 Features
 
-- ✅ **User Authentication** - Sign up and login with localStorage
-- ✅ **Income Management** - Add, edit, and delete income entries
-- ✅ **Expense Management** - Track expenses by category
-- ✅ **Budget Management** - Set budgets per category with spending tracking
-- ✅ **Dashboard** - Visual charts and financial overview
-- ✅ **Settings** - Update your email address
-- ✅ **100% Client-Side** - No backend, no server, runs entirely in the browser
+* ✅ **User Authentication** - Secure sign up and login with Supabase Auth
+* ✅ **Income Management** - Add, edit, and delete income entries
+* ✅ **Expense Management** - Track expenses by category with detailed analytics
+* ✅ **Budget Management** - Set budgets per category with real-time spending tracking
+* ✅ **Savings Goals** - Create and track progress toward financial goals
+* ✅ **Recurring Payments** - Automatically track recurring expenses
+* ✅ **Upcoming Expenses** - Plan and forecast future expenses
+* ✅ **Dashboard** - Visual charts and comprehensive financial overview
+* ✅ **24/7 Session Management** - Automatic session refresh to keep you logged in
+* ✅ **Cloud Storage** - All data securely stored in Supabase PostgreSQL database
+* ✅ **Per-User Data** - Row-level security ensures data privacy
 
-## Tech Stack
+## 🛠 Tech Stack
 
-- **React 18** - UI framework
-- **Vite** - Build tool and dev server
-- **React Router** - Navigation
-- **TailwindCSS** - Styling
-- **Recharts** - Data visualization
-- **LocalStorage** - Data persistence
+* **React 18** - UI framework
+* **Vite** - Build tool and dev server
+* **React Router** - Navigation
+* **TailwindCSS** - Styling
+* **Recharts** - Data visualization
+* **Supabase** - Backend-as-a-Service
+  * PostgreSQL Database
+  * Authentication
+  * Row Level Security (RLS)
 
-## Getting Started
+## 🚀 Getting Started
+
+### Prerequisites
+
+* Node.js 16+ and npm
+* A Supabase account (free tier works great!)
 
 ### Installation
 
-1. Install dependencies:
+1. Clone the repository:
+```bash
+git clone https://github.com/karanthegodd/expense-tracker.git
+cd expense-tracker
+```
+
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-### Development
+3. Set up Supabase:
+   - Create a new project at [supabase.com](https://supabase.com)
+   - Run the SQL schema from `supabase-schema.sql` in your Supabase SQL Editor
+   - Get your project URL and anon key from Settings > API
 
-Run the development server:
+4. Create a `.env` file in the root directory:
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+5. Run the development server:
 ```bash
 npm run dev
 ```
@@ -53,62 +80,108 @@ Preview the production build:
 npm run preview
 ```
 
-## Color Scheme
+## 🎨 Color Scheme
 
-- **Navy**: `#002145`
-- **Orange**: `#FF6A00`
-- **Light Blue**: `#00AEEF`
+* **Navy**: `#002145`
+* **Orange**: `#FF6A00`
+* **Light Blue**: `#00AEEF`
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
-├── components/       # Reusable UI components
+├── components/          # Reusable UI components
 │   ├── Navbar.jsx
 │   ├── Button.jsx
-│   └── Card.jsx
-├── pages/           # Page components
+│   ├── Card.jsx
+│   ├── Modal.jsx
+│   ├── Toast.jsx
+│   └── ToastContainer.jsx
+├── pages/              # Page components
 │   ├── Homepage.jsx
 │   ├── Signup.jsx
 │   ├── Login.jsx
 │   ├── Dashboard.jsx
 │   ├── Income.jsx
 │   ├── Expenses.jsx
-│   ├── Budgets.jsx
+│   ├── FinancialPlanning.jsx
+│   ├── RecurringPayments.jsx
+│   ├── UpcomingExpenses.jsx
 │   └── Settings.jsx
-├── utils/           # Utility functions
-│   ├── auth.js      # Authentication helpers
-│   └── localStorage.js  # Data management
-├── App.jsx          # Main app component with routing
-├── main.jsx         # Entry point
-└── index.css        # Global styles
+├── utils/              # Utility functions
+│   ├── auth.js         # Supabase authentication helpers
+│   ├── supabase.js     # Supabase client configuration
+│   ├── sessionKeepAlive.js  # 24/7 session management
+│   └── localStorage.js # Database operations (Supabase-backed)
+├── App.jsx             # Main app component with routing
+├── main.jsx            # Entry point
+└── index.css           # Global styles
 ```
 
-## LocalStorage Keys
+## 🔒 Security
 
-- `users` - Array of all registered users
-- `user` - Current logged-in user
-- `isLoggedIn` - Login state flag
-- `user_income` - Income entries
-- `user_expenses` - Expense entries
-- `user_budgets` - Budget entries
+* **Row Level Security (RLS)** - Users can only access their own data
+* **Secure Authentication** - Supabase handles password hashing and session management
+* **Environment Variables** - Sensitive keys stored securely
+* **Automatic Session Refresh** - Keeps sessions active 24/7
 
-## Deployment
+## 📊 Database Schema
 
-This app can be easily deployed to:
-- **Netlify** - Drag and drop the `dist` folder after building
-- **Vercel** - Connect your Git repository
-- **GitHub Pages** - Static hosting
-- Any static hosting service
+The app uses the following Supabase tables:
+* `incomes` - Income entries
+* `expenses` - Expense entries
+* `budgets` - Budget categories and amounts
+* `savings_goals` - Savings goals with progress tracking
+* `upcoming_expenses` - Future expense planning
+* `recurring_payments` - Recurring payment tracking
 
-## Notes
+All tables include:
+* `user_id` - Links data to authenticated users
+* `created_at` - Timestamp tracking
+* Row Level Security policies for data isolation
 
-- All data is stored in browser localStorage
-- Data persists across browser sessions
-- No backend or database required
-- Password is stored in plain text (for simplicity - hash in production)
+## 🌐 Deployment
 
-## License
+This app is deployed on **Vercel** and can be easily deployed to:
+
+* **Vercel** - Connect your Git repository (recommended)
+* **Netlify** - Connect your Git repository
+* **GitHub Pages** - Static hosting
+* Any static hosting service
+
+See `DEPLOY.md` for detailed deployment instructions.
+
+**Important:** Don't forget to add your Supabase environment variables in your hosting platform's settings!
+
+## 🔄 Session Management
+
+The app includes a 24/7 session keep-alive service that:
+* Automatically refreshes tokens every 30 minutes
+* Refreshes tokens before expiration (5 minutes before)
+* Refreshes when you return to the tab
+* Keeps you logged in continuously
+
+## 📝 Notes
+
+* All data is stored securely in Supabase PostgreSQL database
+* Data persists across devices when logged in with the same account
+* Session tokens are automatically refreshed to prevent expiration
+* The app uses Supabase's free tier which is perfect for personal use
+
+## 🔗 Links
+
+* **Live App**: [expense-tracker-one-zeta-71.vercel.app](https://expense-tracker-one-zeta-71.vercel.app)
+* **GitHub Repository**: [github.com/karanthegodd/expense-tracker](https://github.com/karanthegodd/expense-tracker)
+
+## 📄 License
 
 MIT
+
+## 👥 Contributors
+
+* Karan Kalra - Initial development
+
+---
+
+Built with ❤️ using React, Vite, and Supabase
 
