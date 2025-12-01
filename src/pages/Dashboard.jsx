@@ -217,18 +217,26 @@ const Dashboard = () => {
       })
       .map(budget => {
         // Calculate cumulative spending from budget creation to expiration (or current date)
-        let startDate = null;
+        // If createdAt is not available, use a very old date as fallback (count all expenses)
+        let startDate = new Date('2000-01-01'); // Default to very old date if createdAt missing
         if (budget.createdAt) {
           startDate = new Date(budget.createdAt);
           startDate.setHours(0, 0, 0, 0);
         }
         
+        // End date: expiration date if set, otherwise use end of selected month or current date (whichever is earlier)
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const selectedMonthEnd = new Date(year, month, 0, 23, 59, 59, 999); // Last day of selected month
+        
         let endDate = new Date();
         if (budget.expirationDate) {
-          endDate = new Date(budget.expirationDate);
-          endDate.setHours(23, 59, 59, 999);
+          const expirationDate = new Date(budget.expirationDate);
+          expirationDate.setHours(23, 59, 59, 999);
+          // Use the earlier of: expiration date, end of selected month, or current date
+          endDate = new Date(Math.min(expirationDate.getTime(), selectedMonthEnd.getTime(), Date.now()));
         } else {
-          endDate.setHours(23, 59, 59, 999);
+          // No expiration: use end of selected month or current date (whichever is earlier)
+          endDate = new Date(Math.min(selectedMonthEnd.getTime(), Date.now()));
         }
         
         // Filter expenses by category and budget active period (cumulative)
@@ -238,9 +246,10 @@ const Dashboard = () => {
             if (exp.category !== budget.category) return false;
             
             const expDate = new Date(exp.date);
+            expDate.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
             
             // Only count expenses within the budget's active period
-            if (startDate && expDate < startDate) return false;
+            if (expDate < startDate) return false;
             if (expDate > endDate) return false;
             
             return true;
