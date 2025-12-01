@@ -15,11 +15,20 @@ const Expenses = () => {
   const [filterCategory, setFilterCategory] = useState('');
   const [sortBy, setSortBy] = useState('date-desc');
   const { showToast } = useToast();
+  // Helper function to get today's date in YYYY-MM-DD format (local timezone)
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
     category: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -123,7 +132,7 @@ const Expenses = () => {
       name: '',
       amount: '',
       category: '',
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayDate(),
     });
     setEditingId(null);
     setShowForm(false);
