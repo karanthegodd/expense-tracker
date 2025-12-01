@@ -1386,20 +1386,36 @@ const Dashboard = () => {
         <h2 className="text-xl font-bold text-white mb-4 flex items-center">
           <span className="mr-2 text-lg">💳</span> Recent Transactions
         </h2>
-        {data.recentTransactions.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-white/20">
-                  <th className="text-left py-4 px-4 font-semibold text-white/80">Date</th>
-                  <th className="text-left py-4 px-4 font-semibold text-white/80">Type</th>
-                  <th className="text-left py-4 px-4 font-semibold text-white/80">Description</th>
-                  <th className="text-left py-4 px-4 font-semibold text-white/80">Category</th>
-                  <th className="text-right py-4 px-4 font-semibold text-white/80">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recentTransactions.map((transaction, index) => (
+        {(() => {
+          // Filter transactions for selected month
+          const [year, month] = selectedMonth.split('-').map(Number);
+          const filteredTransactions = (data.recentTransactions || []).filter(transaction => {
+            if (!transaction.date) return false;
+            const transDate = parseLocalDate(transaction.date);
+            if (!transDate) return false;
+            return transDate.getMonth() === month - 1 && transDate.getFullYear() === year;
+          }).sort((a, b) => {
+            // Sort by date descending (most recent first)
+            const dateA = parseLocalDate(a.date);
+            const dateB = parseLocalDate(b.date);
+            if (!dateA || !dateB) return 0;
+            return dateB - dateA;
+          });
+          
+          return filteredTransactions.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-white/20">
+                    <th className="text-left py-4 px-4 font-semibold text-white/80">Date</th>
+                    <th className="text-left py-4 px-4 font-semibold text-white/80">Type</th>
+                    <th className="text-left py-4 px-4 font-semibold text-white/80">Description</th>
+                    <th className="text-left py-4 px-4 font-semibold text-white/80">Category</th>
+                    <th className="text-right py-4 px-4 font-semibold text-white/80">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTransactions.map((transaction, index) => (
                   <tr 
                     key={transaction.id} 
                     className="border-b border-white/10 hover:bg-white/5 transition-all duration-200 slide-up"
@@ -1451,17 +1467,18 @@ const Dashboard = () => {
                       )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-12 text-white/60">
-            <span className="text-6xl mb-4 block">💳</span>
-            <p className="text-lg">No transactions yet</p>
-            <p className="text-sm mt-2">Start by adding income or expenses!</p>
-          </div>
-        )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-white/60">
+              <span className="text-6xl mb-4 block">💳</span>
+              <p className="text-lg">No transactions for this month</p>
+              <p className="text-sm mt-2">Start by adding income or expenses!</p>
+            </div>
+          );
+        })()}
       </Card>
     </div>
   );
