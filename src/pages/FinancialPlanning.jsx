@@ -201,6 +201,7 @@ const FinancialPlanning = () => {
           // Force refresh budgets - wait a bit to ensure DB is updated
           await new Promise(resolve => setTimeout(resolve, 500));
           const refreshedBudgets = await getBudgets();
+          console.log('📊 Fresh budgets from DB (update):', refreshedBudgets);
           setBudgets([...refreshedBudgets || []]);
           setBudgetRefreshKey(prev => prev + 1);
           console.log('✅ Budgets refreshed after update, count:', (refreshedBudgets || []).length);
