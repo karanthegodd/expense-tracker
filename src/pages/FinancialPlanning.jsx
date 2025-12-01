@@ -210,17 +210,26 @@ const FinancialPlanning = () => {
         const result = await addBudget(normalizedBudgetData);
         console.log('📊 Add result:', result);
         if (result) {
+          console.log('✅ Budget added successfully:', result);
           showToast('Budget added', 'success');
-          resetBudgetForm();
+          
           // Refresh expenses to recalculate spent amounts
           const expensesData = await getExpenses();
+          setExpenses(expensesData || []);
+          
           // Force refresh budgets - wait a bit to ensure DB is updated
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise(resolve => setTimeout(resolve, 500));
           const refreshedBudgets = await getBudgets();
           console.log('📊 Fresh budgets from DB:', refreshedBudgets);
-          setBudgets(refreshedBudgets || []);
-          setExpenses(expensesData || []);
-          console.log('✅ Budgets state updated, count:', (refreshedBudgets || []).length);
+          console.log('📊 Budget count before update:', budgets.length);
+          
+          // Force state update by creating new array reference
+          setBudgets([...refreshedBudgets || []]);
+          
+          console.log('✅ Budgets state updated, new count:', (refreshedBudgets || []).length);
+          
+          // Reset form AFTER state update
+          resetBudgetForm();
         } else {
           console.error('❌ addBudget returned null - check console for errors');
           showToast('Failed to add budget. Check console for details.', 'error');
