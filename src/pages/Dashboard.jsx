@@ -53,8 +53,8 @@ const Dashboard = () => {
       // Store all incomes and expenses for month filtering
       setData({
         ...totals,
-        allIncomes: totals.monthlyIncomes || [],
-        allExpenses: totals.monthlyExpenses || [],
+        allIncomes: totals.allIncomes || totals.monthlyIncomes || [],
+        allExpenses: totals.allExpenses || totals.monthlyExpenses || [],
       });
     } catch (error) {
       console.error('❌ Error loading dashboard data:', error);
@@ -80,6 +80,8 @@ const Dashboard = () => {
         upcomingExpenses: [],
         avgBudgetProgress: 0,
         totalUpcoming: 0,
+        allIncomes: [],
+        allExpenses: [],
       });
     }
   };
@@ -169,11 +171,28 @@ const Dashboard = () => {
 
   const dailyData = getDailyData();
 
-  // Category data for pie chart
-  const categoryData = Object.entries(data.categoryBreakdown).map(([category, amount]) => ({
-    category,
-    amount: parseFloat(amount.toFixed(2)),
-  }));
+  // Category data for pie chart (for selected month)
+  const getCategoryData = () => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const monthlyExpenses = (data.allExpenses || []).filter(exp => {
+      if (!exp.date) return false;
+      const expDate = new Date(exp.date);
+      return expDate.getMonth() === month - 1 && expDate.getFullYear() === year;
+    });
+    
+    const categoryBreakdown = {};
+    monthlyExpenses.forEach(exp => {
+      const category = exp.category || 'Uncategorized';
+      categoryBreakdown[category] = (categoryBreakdown[category] || 0) + parseFloat(exp.amount || 0);
+    });
+    
+    return Object.entries(categoryBreakdown).map(([category, amount]) => ({
+      category,
+      amount: parseFloat(amount.toFixed(2)),
+    }));
+  };
+
+  const categoryData = getCategoryData();
 
   const pieColors = ['#FF6A00', '#00AEEF', '#002145', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#9C27B0'];
 
