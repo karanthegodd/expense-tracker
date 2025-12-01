@@ -356,9 +356,9 @@ const Dashboard = () => {
               return false;
             }
             
-            // Use same date parsing as FinancialPlanning.jsx
-            const expDate = new Date(exp.date);
-            if (isNaN(expDate.getTime())) {
+            // Use same date parsing as FinancialPlanning.jsx - use parseLocalDate for consistency
+            const expDate = parseLocalDate(exp.date);
+            if (!expDate) {
               if (budget.category === 'Shopping') {
                 console.log('❌ Could not parse expense date:', exp.date);
               }
