@@ -103,16 +103,22 @@ export const getCurrentUserEmail = async () => {
 
 export const resetPassword = async (email) => {
   try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    console.log('🔄 Requesting password reset for:', email);
+    console.log('📍 Redirect URL:', `${window.location.origin}/reset-password`);
+    
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
 
     if (error) {
+      console.error('❌ Password reset error:', error);
       return { success: false, message: error.message };
     }
 
+    console.log('✅ Password reset email sent successfully');
     return { success: true };
   } catch (error) {
+    console.error('❌ Exception in resetPassword:', error);
     return { success: false, message: error.message || 'An error occurred while sending reset email' };
   }
 };

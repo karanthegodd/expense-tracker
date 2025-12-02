@@ -21,7 +21,18 @@ const ForgotPassword = () => {
     if (result.success) {
       setSuccess(true);
     } else {
-      setError(result.message);
+      // Provide more helpful error messages
+      let errorMessage = result.message;
+      if (result.message?.includes('email')) {
+        errorMessage = 'Unable to send reset email. Please check your email address and try again.';
+      } else if (result.message?.includes('rate limit')) {
+        errorMessage = 'Too many requests. Please wait a few minutes and try again.';
+      } else if (result.message) {
+        errorMessage = result.message;
+      } else {
+        errorMessage = 'Failed to send reset email. Please check your Supabase email configuration.';
+      }
+      setError(errorMessage);
     }
     setLoading(false);
   };
