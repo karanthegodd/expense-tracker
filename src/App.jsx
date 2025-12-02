@@ -15,8 +15,6 @@ import Comparison from './pages/Comparison';
 import { isAuthenticated } from './utils/auth';
 import { supabase } from './utils/supabase';
 import { startSessionKeepAlive, stopSessionKeepAlive } from './utils/sessionKeepAlive';
-import './utils/debugAuth'; // Load debug utility
-import './utils/testDatabase'; // Load database test utility
 import { ToastProvider } from './components/ToastContainer';
 
 const PrivateRoute = ({ children }) => {
