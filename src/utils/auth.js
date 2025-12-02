@@ -101,3 +101,35 @@ export const getCurrentUserEmail = async () => {
   return user?.email || null;
 };
 
+export const resetPassword = async (email) => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: error.message || 'An error occurred while sending reset email' };
+  }
+};
+
+export const updatePassword = async (newPassword) => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: error.message || 'An error occurred while updating password' };
+  }
+};
+

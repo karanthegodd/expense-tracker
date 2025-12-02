@@ -93,6 +93,15 @@ const Login = () => {
               </div>
             </div>
 
+            <div className="flex items-center justify-end">
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-orange-300 font-medium hover:text-orange-200 transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
           <Button
             type="submit"
             variant="primary"
